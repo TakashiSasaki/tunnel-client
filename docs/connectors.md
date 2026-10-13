@@ -104,6 +104,19 @@ Harpoon server, not ChatGPT's runtime session with the customer MCP server.
 Those internal commands intentionally do not carry the connector's OAuth
 bearer token and must not be routed to the customer MCP binding.
 
+## Hosted service limits
+
+The following limits apply to the hosted MCP service.
+
+| Limit | Value | Scope |
+| --- | --- | --- |
+| MCP request rate | 600 requests per minute (10 per second sustained) | Shared by requests with the same tunnel ID and calling application ID across MCP channels. If the calling application ID is unavailable, requests with the same tunnel ID and user share the limit. Multiple tunnel-client processes do not multiply the allowance. |
+| Serialized request or response | 10 MiB (10,485,760 bytes) | Applies to the complete serialized tunnel envelope, including headers and protocol metadata, so usable MCP content is slightly smaller. Applies separately to each streaming notification and final response. |
+| Request deadline | 120 seconds | One absolute budget from hosted queue admission through final response delivery. Queue time consumes the budget, and progress notifications do not reset it. |
+| Pending queue | 1,000 requests per tunnel | Shared across MCP channels. Counts only requests waiting for tunnel-client to poll them; already-fetched requests are excluded. |
+
+These limits are service protections, not throughput or latency guarantees. Queue-record retention for cleanup does not extend the 120-second request deadline. To request a change to these limits, contact [OpenAI Support](https://help.openai.com/en/articles/6614161-how-can-i-contact-support).
+
 ## Streaming and notifications
 
 The dispatcher treats JSON-RPC requests and notifications differently:
@@ -117,9 +130,10 @@ The dispatcher treats JSON-RPC requests and notifications differently:
 - If the downstream connection closes before a final response, the dispatcher
   posts a terminal JSON-RPC error response so the connector does not hang.
 
-The effective connection window is bounded by `MCP_CONNECTION_MAX_TTL`
-(default `10m`). Long-running tools should either finish within that window or
-stream progress notifications and return a final response before the TTL ends.
+The local MCP connection has a default 10-minute safety ceiling. This local
+ceiling does not extend the hosted 120-second request deadline, and progress
+notifications do not reset that deadline. Tools must return their final response
+within the hosted deadline.
 
 ## OAuth-protected connector behavior
 
