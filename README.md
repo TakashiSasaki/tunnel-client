@@ -613,6 +613,25 @@ Starter prompts for Codex:
 - `Run tunnel-client codex assistant and summarize what this checkout is for in one sentence.`
 - `Install the Codex plugin from the tunnel-client binary, connect the provided tunnel id, and tell me whether the runtime is launched, healthy, or ready.`
 - `For a long-lived local runtime, use tunnel-client runtimes connect to attach the provided tunnel id, then run tunnel-client runtimes status <alias> before reporting whether the runtime is launched, healthy, or ready.`
+
+### Complete ChatGPT setup with Codex
+
+Copy this prompt into Codex on a computer with browser access and a terminal on
+or connected to a host that can reach your private MCP server:
+
+```text
+Help me set up and verify a private Secure MCP Tunnel from my internal MCP server to ChatGPT end to end. Use browser/computer access and a terminal, following https://developers.openai.com/api/docs/guides/secure-mcp-tunnels and https://github.com/openai/tunnel-client/blob/master/docs/onboarding.md; check current UI and CLI help as you go.
+
+First identify the intended Platform organization and ChatGPT workspace, MCP server HTTP URL or stdio command, and client host. Inspect existing tunnel, key, and ChatGPT custom MCP plugin; reuse suitable resources. Confirm tunnel organization/workspace association and permissions: tunnel creators need Tunnels Read + Manage; the restricted runtime key and plugin operator need Tunnels Read + Use. Keep literal secrets out of chat, command arguments, logs, screenshots, and config files; have me enter them locally through a secure input or environment reference.
+
+Install the supported tunnel-client; run `tunnel-client help quickstart`, configure the server, run `tunnel-client doctor --profile <name> --explain`, start the client, and verify readiness and active polling. Keep it running for discovery and calls. In ChatGPT Plugins, add or finish a private custom MCP server with Connection: Tunnel, select the same tunnel, configure required authentication, install it, and make a safe representative tool call.
+
+Report observed evidence for each checkpoint and the exact error and next action for any blocker. Call setup complete only after the ChatGPT tool call succeeds.
+```
+
+The ChatGPT custom MCP plugin in this prompt is separate from the local Codex
+plugin installed by `tunnel-client codex plugin install`.
+
 ## What it does
 
 - The client **long-polls** the OpenAI tunnel control plane over HTTPS:
