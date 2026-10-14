@@ -615,8 +615,9 @@ event.
 
 Response JSON strings, object keys, and forwarded response headers must contain
 valid Unicode. An escaped lone surrogate is rejected with
-`400 invalid_json_payload`; valid Unicode and escaped surrogate pairs are
-preserved. For a rejected final response, the service makes one best-effort
+`400 invalid_json_payload`; valid Unicode and escaped surrogate pairs in JSON are
+preserved. Forwarded headers also follow the HTTP field-value restrictions below.
+For a rejected final response, the service makes one best-effort
 completion of that command with a fixed JSON-RPC `-32603` gateway error so its
 caller does not wait for the undeliverable response. Rejected progress
 notifications do not complete the command; continue draining the MCP stream and
@@ -625,6 +626,18 @@ operation. Both response route aliases and the legacy `rpc_resp` field follow
 these rules; no client upgrade or new field is required for valid responses.
 An invalid Unicode `request_id` receives the same `400` without completing any
 command because it cannot identify a valid pending request.
+
+Response statuses outside `100` through `599` and invalid forwarded HTTP field
+values are rejected with `400 invalid_tunnel_client_response`. Both failures use
+the message "tunnel-client submitted an invalid response status code or forwarded header value."
+Field values may contain
+horizontal tabs, printable ASCII, and Latin-1 obs-text (`0x80` through `0xff`);
+other controls and characters outside Latin-1 are invalid. Validation follows the existing allowlist
+and `Connection` filtering, so discarded headers remain ignored. Valid MCP error
+bodies and status normalization are unchanged. For a rejected final response, the
+service attempts bounded completion with a fixed gateway error; a rejected
+progress notification leaves it pending. Do not retry the rejected payload or
+replay the MCP operation.
 
 A successful POST returns:
 
