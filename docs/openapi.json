@@ -145,6 +145,278 @@
         ]
       }
     },
+    "/v1/tunnels/{tunnel_id}/protocol": {
+      "get": {
+        "summary": "Discover supported tunnel protocols and a compatible selection",
+        "description": "Recommend a compatible profile without reserving or selecting runtime work.",
+        "operationId": "discoverTunnelProtocol",
+        "parameters": [
+          {
+            "name": "tunnel_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Opaque tunnel identifier.",
+              "title": "Tunnel Id"
+            },
+            "description": "Opaque tunnel identifier."
+          },
+          {
+            "name": "Tunnel-Accept-Protocol-Versions",
+            "in": "header",
+            "required": false,
+            "description": "Comma-separated profiles the client implements. Repeated fields are combined; at most 16 members before deduplication and 1024 aggregate value bytes, including joining commas. Identifiers are legacy or valid YYYY-MM-DD dates. Omission or no supported intersection returns selected_version: null. Malformed lists return 400. The returned selection is advisory and does not change runtime request handling.",
+            "schema": {
+              "type": "string",
+              "maxLength": 1024
+            },
+            "example": "legacy, 2026-08-25"
+          },
+          {
+            "name": "X-Tunnel-Client-Name",
+            "in": "header",
+            "required": false,
+            "description": "Stable client implementation name for diagnostics.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Tunnel-Client-Version",
+            "in": "header",
+            "required": false,
+            "description": "Client implementation version for diagnostics.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtocolDiscoveryResponse"
+                }
+              }
+            },
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              },
+              "Cache-Control": {
+                "description": "Discovery responses must not be stored.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "no-store"
+              }
+            }
+          },
+          "400": {
+            "description": "Tunnel-service error response (400). Stable codes: `invalid_tunnel_id_format`, `tunnel_protocol_headers_invalid`. Code details and mitigations are documented in the APIErrorBody.code schema.",
+            "x-tunnel-error-codes": [
+              "invalid_tunnel_id_format",
+              "tunnel_protocol_headers_invalid"
+            ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              },
+              "Cache-Control": {
+                "description": "Discovery responses must not be stored.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Tunnel-service error response (401). Stable codes: `tunnel_active_organization_required`, `tunnel_missing_principals`, `tunnel_use_forbidden`. Code details and mitigations are documented in the APIErrorBody.code schema.",
+            "x-tunnel-error-codes": [
+              "tunnel_active_organization_required",
+              "tunnel_missing_principals",
+              "tunnel_use_forbidden"
+            ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              },
+              "Cache-Control": {
+                "description": "Discovery responses must not be stored.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Tunnel-service error response (403).",
+            "x-tunnel-error-codes": [],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              },
+              "Cache-Control": {
+                "description": "Discovery responses must not be stored.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "no-store"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Tunnel-service error response (503).",
+            "x-tunnel-error-codes": [],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              },
+              "Cache-Control": {
+                "description": "Discovery responses must not be stored.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "no-store"
+              },
+              "Retry-After": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },
     "/v1/tunnels/{tunnel_id}/cloudflare/runtime": {
       "get": {
         "summary": "Fetch managed Cloudflare runtime material for a tunnel client",
@@ -1427,6 +1699,58 @@
         ],
         "title": "PolledCommandList"
       },
+      "ProtocolDiscoveryResponse": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "const": 1,
+            "title": "Schema Version",
+            "default": 1
+          },
+          "selected_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Version"
+          },
+          "supported_versions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Supported Versions"
+          },
+          "minimum_version": {
+            "type": "string",
+            "title": "Minimum Version"
+          },
+          "latest_version": {
+            "type": "string",
+            "title": "Latest Version"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/ProtocolVersionInfo"
+            },
+            "type": "array",
+            "title": "Versions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "selected_version",
+          "supported_versions",
+          "minimum_version",
+          "latest_version",
+          "versions"
+        ],
+        "title": "ProtocolDiscoveryResponse"
+      },
       "TunnelClientMetadata": {
         "type": "object",
         "description": "Minimal tunnel metadata used by a tunnel client during startup. The service may return additional management fields; clients must ignore fields they do not recognize.",
@@ -1744,7 +2068,7 @@
               }
             ],
             "title": "Code",
-            "description": "Stable tunnel-service error code when one is available. Generic platform or validation errors can return null or a non-tunnel code.\n\nKnown tunnel-service codes:\n- `invalid_channel_format`: The MCP channel name contains unsupported characters. Mitigation: Use lowercase letters, digits, hyphens, or underscores in channel names.\n- `invalid_client_network_access_policy_cidr`: One allowed CIDR in the client-network access policy is invalid; param identifies its zero-based list index. Mitigation: Correct the indicated entry using the validation message. Enter a network address for the prefix, or /32 for one IPv4 address and /128 for one IPv6 address.\n- `invalid_client_network_access_policy_cidrs`: The client-network access policy allowed_cidrs list is empty or exceeds its limit. Mitigation: Provide between 1 and 100 allowed CIDRs.\n- `invalid_client_network_access_policy_request`: The client-network access policy request body or one of its fields is malformed. Mitigation: Send a JSON object matching the policy request schema; param identifies the invalid field when available.\n- `invalid_json_payload`: The MCP request body could not be decoded as a JSON object, or a tunnel response payload, forwarded header, or request ID contains an unpaired Unicode surrogate. Mitigation: Fix the MCP caller/server to send valid JSON objects and Unicode without unpaired surrogates. Valid non-ASCII text is supported.\n- `invalid_tunnel_client_response`: tunnel-client submitted an invalid response status code or forwarded header value. Mitigation: Send a status from 100 through 599 and forwarded header values containing only horizontal tabs, printable ASCII, or Latin-1 obs-text (0x80 through 0xff). The service attempts bounded gateway-error completion for a rejected final response; do not replay the tool call automatically.\n- `invalid_tunnel_id_format`: The tunnel ID path segment is not a tunnel_<32 lowercase alphanumeric> value. Mitigation: Use the exact tunnel ID from Platform tunnel settings in control_plane.tunnel_id, CONTROL_PLANE_TUNNEL_ID, or --control-plane.tunnel-id.\n- `missing_mcp_session_id`: An MCP session termination request did not include Mcp-Session-Id. Mitigation: Send DELETE session termination requests with the Mcp-Session-Id header from the active MCP session.\n- `oauth_shim_audience_unavailable`: The connected tunnel-client does not advertise OAuth token audience lookup. Mitigation: Upgrade tunnel-client before using the opt-in private_key_jwt audience lookup.\n- `oauth_shim_harpoon_call_failed`: The OAuth shim Harpoon call failed or returned an invalid upstream response. Mitigation: Check the Harpoon target URL, upstream MCP server health, and tunnel-client logs.\n- `oauth_shim_invalid_target_uri`: An OAuth shim metadata URI was malformed or used an invalid harpoon target label. Mitigation: Use an absolute http(s) URI or harpoon://<label> that matches harpoon.targets[].label.\n- `oauth_shim_target_not_found`: The requested OAuth shim target label was not found. Mitigation: Add or correct the matching harpoon.targets[].label entry and restart tunnel-client.\n- `oauth_shim_unshimmable_endpoint`: The OAuth shim could not map the upstream metadata endpoint to a supported tunnel route. Mitigation: Configure supported OAuth metadata endpoints and grouped harpoon targets for auth-server metadata.\n- `oauth_shim_upstream_timeout`: The OAuth shim timed out waiting for a Harpoon response. Mitigation: Ensure the Harpoon target and upstream MCP server respond before the tunnel timeout.\n- `pending_request_not_found`: The pending request was already processed, expired, or never existed for this tunnel. Mitigation: No manual action is needed for isolated races; if repeated, ensure only healthy clients acknowledge requests for this tunnel.\n- `rate_limit_exceeded`: The caller exceeded the tunnel-service rate limit for this route or tunnel. Mitigation: Reduce request concurrency or volume and let tunnel-client retry after backoff.\n- `request_body_too_large`: The MCP request body or queued tunnel response exceeded the service byte limit. Mitigation: Send a smaller MCP request or response body; avoid large inline payloads.\n- `rfc9728_www_authenticate_unsupported`: The request attempted an RFC9728 WWW-Authenticate probe flow that tunnels do not support. Mitigation: Use the well-known OAuth discovery endpoints instead of WWW-Authenticate probing.\n- `tunnel_active_organization_context_required`: The route requires an active organization context but none was available. Mitigation: Select or pass the intended organization ID before listing principals or managing principal-validation overrides.\n- `tunnel_active_organization_required`: The tunnel is organization-backed and the request did not include an explicit organization context. Mitigation: Set --control-plane.organization-id, CONTROL_PLANE_ORGANIZATION_ID, or control_plane.organization_id for tunnel-client.\n- `tunnel_client_network_access_denied`: The tunnel has client-network enforcement enabled and the request network is unknown or outside its allowed CIDRs. Mitigation: Retry from an allowed client network, or clear/update the tunnel client-network access policy if the restriction is no longer intended.\n- `tunnel_client_not_connected`: The tunnel-client is not currently connected to drain requests for this tunnel. Mitigation: Start or restart tunnel-client, then check its /readyz endpoint and logs.\n- `tunnel_client_not_seen`: No tunnel-client has polled recently for this tunnel. Mitigation: Start or restart tunnel-client with the matching control_plane.tunnel_id and control_plane.api_key.\n- `tunnel_management_permission_required`: The caller lacks tunnel management permission for the active org or workspace. Mitigation: Use an admin key or account with Tunnels Read and Manage for the target org/workspace.\n- `tunnel_missing_principals`: The authenticated request did not contain org/workspace principals that can be checked for tunnel use. Mitigation: Use a runtime API key associated with the intended organization or workspace.\n- `tunnel_principal_association_unverified`: Tunnel creation or update requested principals whose association could not be automatically verified. Mitigation: Use an automatically verifiable org/workspace/tenant combination or request a reviewed association override.\n- `tunnel_principal_limit_exceeded`: A tunnel principal list exceeded the per-kind limit. Mitigation: Reduce each of tenant_ids, workspace_ids, and organization_ids to the documented maximum.\n- `tunnel_principal_validation_override_automatically_derivable`: A reviewed principal-validation override was rejected because the association is already automatically derivable. Mitigation: Create or update the tunnel directly; no reviewed override is needed for that principal set.\n- `tunnel_principal_validation_override_management_permission_required`: The caller lacks permission to manage tunnel principal-validation overrides. Mitigation: Use a credential authorized for tunnel principal-validation override management.\n- `tunnel_queue_full`: The per-tunnel pending request queue is full. Mitigation: Reduce MCP request concurrency or add enough healthy tunnel-client capacity to drain the tunnel.\n- `tunnel_request_mismatch`: The response request_id does not belong to the tunnel being acknowledged. Mitigation: Verify the client uses the same control_plane.tunnel_id that received the command.\n- `tunnel_transport_unavailable`: Redis master changed during queue-v1 work. Mitigation: Retry if safe; promotion may lose or duplicate work.\n- `tunnel_use_forbidden`: The caller does not have tunnel use permission for any default principal. Mitigation: Use credentials for a principal that has access to this tunnel or recreate/connect the runtime in the owning org/workspace.\n- `wrong_cluster`: A capable poller reached a placement that is no longer current. Mitigation: Validate the replacement X-Tunnel-Shard-Token and policy_revision, then poll the same configured endpoint after backoff. Production emission requires separate activation.",
+            "description": "Stable tunnel-service error code when one is available. Generic platform or validation errors can return null or a non-tunnel code.\n\nKnown tunnel-service codes:\n- `invalid_channel_format`: The MCP channel name contains unsupported characters. Mitigation: Use lowercase letters, digits, hyphens, or underscores in channel names.\n- `invalid_client_network_access_policy_cidr`: One allowed CIDR in the client-network access policy is invalid; param identifies its zero-based list index. Mitigation: Correct the indicated entry using the validation message. Enter a network address for the prefix, or /32 for one IPv4 address and /128 for one IPv6 address.\n- `invalid_client_network_access_policy_cidrs`: The client-network access policy allowed_cidrs list is empty or exceeds its limit. Mitigation: Provide between 1 and 100 allowed CIDRs.\n- `invalid_client_network_access_policy_request`: The client-network access policy request body or one of its fields is malformed. Mitigation: Send a JSON object matching the policy request schema; param identifies the invalid field when available.\n- `invalid_json_payload`: The MCP request body could not be decoded as a JSON object, or a tunnel response payload, forwarded header, or request ID contains an unpaired Unicode surrogate. Mitigation: Fix the MCP caller/server to send valid JSON objects and Unicode without unpaired surrogates. Valid non-ASCII text is supported.\n- `invalid_tunnel_client_response`: tunnel-client submitted an invalid response status code or forwarded header value. Mitigation: Send a status from 100 through 599 and forwarded header values containing only horizontal tabs, printable ASCII, or Latin-1 obs-text (0x80 through 0xff). The service attempts bounded gateway-error completion for a rejected final response; do not replay the tool call automatically.\n- `invalid_tunnel_id_format`: The tunnel ID path segment is not a tunnel_<32 lowercase alphanumeric> value. Mitigation: Use the exact tunnel ID from Platform tunnel settings in control_plane.tunnel_id, CONTROL_PLANE_TUNNEL_ID, or --control-plane.tunnel-id.\n- `missing_mcp_session_id`: An MCP session termination request did not include Mcp-Session-Id. Mitigation: Send DELETE session termination requests with the Mcp-Session-Id header from the active MCP session.\n- `oauth_shim_audience_unavailable`: The connected tunnel-client does not advertise OAuth token audience lookup. Mitigation: Upgrade tunnel-client before using the opt-in private_key_jwt audience lookup.\n- `oauth_shim_harpoon_call_failed`: The OAuth shim Harpoon call failed or returned an invalid upstream response. Mitigation: Check the Harpoon target URL, upstream MCP server health, and tunnel-client logs.\n- `oauth_shim_invalid_target_uri`: An OAuth shim metadata URI was malformed or used an invalid harpoon target label. Mitigation: Use an absolute http(s) URI or harpoon://<label> that matches harpoon.targets[].label.\n- `oauth_shim_target_not_found`: The requested OAuth shim target label was not found. Mitigation: Add or correct the matching harpoon.targets[].label entry and restart tunnel-client.\n- `oauth_shim_unshimmable_endpoint`: The OAuth shim could not map the upstream metadata endpoint to a supported tunnel route. Mitigation: Configure supported OAuth metadata endpoints and grouped harpoon targets for auth-server metadata.\n- `oauth_shim_upstream_timeout`: The OAuth shim timed out waiting for a Harpoon response. Mitigation: Ensure the Harpoon target and upstream MCP server respond before the tunnel timeout.\n- `pending_request_not_found`: The pending request was already processed, expired, or never existed for this tunnel. Mitigation: No manual action is needed for isolated races; if repeated, ensure only healthy clients acknowledge requests for this tunnel.\n- `rate_limit_exceeded`: The caller exceeded the tunnel-service rate limit for this route or tunnel. Mitigation: Reduce request concurrency or volume and let tunnel-client retry after backoff.\n- `request_body_too_large`: The MCP request body or queued tunnel response exceeded the service byte limit. Mitigation: Send a smaller MCP request or response body; avoid large inline payloads.\n- `rfc9728_www_authenticate_unsupported`: The request attempted an RFC9728 WWW-Authenticate probe flow that tunnels do not support. Mitigation: Use the well-known OAuth discovery endpoints instead of WWW-Authenticate probing.\n- `tunnel_active_organization_context_required`: The route requires an active organization context but none was available. Mitigation: Select or pass the intended organization ID before listing principals or managing principal-validation overrides.\n- `tunnel_active_organization_required`: The tunnel is organization-backed and the request did not include an explicit organization context. Mitigation: Set --control-plane.organization-id, CONTROL_PLANE_ORGANIZATION_ID, or control_plane.organization_id for tunnel-client.\n- `tunnel_client_network_access_denied`: The tunnel has client-network enforcement enabled and the request network is unknown or outside its allowed CIDRs. Mitigation: Retry from an allowed client network, or clear/update the tunnel client-network access policy if the restriction is no longer intended.\n- `tunnel_client_not_connected`: The tunnel-client is not currently connected to drain requests for this tunnel. Mitigation: Start or restart tunnel-client, then check its /readyz endpoint and logs.\n- `tunnel_client_not_seen`: No tunnel-client has polled recently for this tunnel. Mitigation: Start or restart tunnel-client with the matching control_plane.tunnel_id and control_plane.api_key.\n- `tunnel_management_permission_required`: The caller lacks tunnel management permission for the active org or workspace. Mitigation: Use an admin key or account with Tunnels Read and Manage for the target org/workspace.\n- `tunnel_missing_principals`: The authenticated request did not contain org/workspace principals that can be checked for tunnel use. Mitigation: Use a runtime API key associated with the intended organization or workspace.\n- `tunnel_principal_association_unverified`: Tunnel creation or update requested principals whose association could not be automatically verified. Mitigation: Use an automatically verifiable org/workspace/tenant combination or request a reviewed association override.\n- `tunnel_principal_limit_exceeded`: A tunnel principal list exceeded the per-kind limit. Mitigation: Reduce each of tenant_ids, workspace_ids, and organization_ids to the documented maximum.\n- `tunnel_principal_validation_override_automatically_derivable`: A reviewed principal-validation override was rejected because the association is already automatically derivable. Mitigation: Create or update the tunnel directly; no reviewed override is needed for that principal set.\n- `tunnel_principal_validation_override_management_permission_required`: The caller lacks permission to manage tunnel principal-validation overrides. Mitigation: Use a credential authorized for tunnel principal-validation override management.\n- `tunnel_protocol_headers_invalid`: The protocol discovery acceptance header is malformed or exceeds its limits. Mitigation: Send at most 16 comma-separated legacy or valid YYYY-MM-DD identifiers within 1024 aggregate value bytes, or omit the header to inspect support without a selection.\n- `tunnel_queue_full`: The per-tunnel pending request queue is full. Mitigation: Reduce MCP request concurrency or add enough healthy tunnel-client capacity to drain the tunnel.\n- `tunnel_request_mismatch`: The response request_id does not belong to the tunnel being acknowledged. Mitigation: Verify the client uses the same control_plane.tunnel_id that received the command.\n- `tunnel_transport_unavailable`: Redis master changed during queue-v1 work. Mitigation: Retry if safe; promotion may lose or duplicate work.\n- `tunnel_use_forbidden`: The caller does not have tunnel use permission for any default principal. Mitigation: Use credentials for a principal that has access to this tunnel or recreate/connect the runtime in the owning org/workspace.\n- `wrong_cluster`: A capable poller reached a placement that is no longer current. Mitigation: Validate the replacement X-Tunnel-Shard-Token and policy_revision, then poll the same configured endpoint after backoff. Production emission requires separate activation.",
             "x-tunnel-error-codes": [
               "invalid_channel_format",
               "invalid_client_network_access_policy_cidr",
@@ -1775,6 +2099,7 @@
               "tunnel_principal_limit_exceeded",
               "tunnel_principal_validation_override_automatically_derivable",
               "tunnel_principal_validation_override_management_permission_required",
+              "tunnel_protocol_headers_invalid",
               "tunnel_queue_full",
               "tunnel_request_mismatch",
               "tunnel_transport_unavailable",
@@ -1981,6 +2306,64 @@
           "created_at"
         ],
         "title": "SessionTerminationPolledCommand"
+      },
+      "ProtocolVersionInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "current",
+              "deprecated",
+              "retired"
+            ],
+            "title": "Status",
+            "default": "current"
+          },
+          "deprecated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deprecated At"
+          },
+          "sunset_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sunset At"
+          },
+          "migration_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Migration Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "ProtocolVersionInfo"
       },
       "ResponsePayloadType": {
         "type": "string",

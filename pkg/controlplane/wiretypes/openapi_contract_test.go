@@ -52,6 +52,7 @@ func TestOpenAPIContractSurface(t *testing.T) {
 		"/v1/tunnels/{tunnel_id}":                    "get",
 		"/v1/tunnels/{tunnel_id}/cloudflare/runtime": "get",
 		"/v1/tunnels/{tunnel_id}/poll":               "get",
+		"/v1/tunnels/{tunnel_id}/protocol":           "get",
 		"/v1/tunnels/{tunnel_id}/response":           "post",
 	}
 	if len(paths) != len(expected) {
@@ -70,6 +71,7 @@ func TestOpenAPIContractSurface(t *testing.T) {
 	assertOperationID(t, spec, "/v1/tunnels/{tunnel_id}", "get", "getTunnelMetadata")
 	assertOperationID(t, spec, "/v1/tunnels/{tunnel_id}/cloudflare/runtime", "get", "getCloudflareRuntime")
 	assertOperationID(t, spec, "/v1/tunnels/{tunnel_id}/poll", "get", "pollTunnelCommands")
+	assertOperationID(t, spec, "/v1/tunnels/{tunnel_id}/protocol", "get", "discoverTunnelProtocol")
 	assertOperationID(t, spec, "/v1/tunnels/{tunnel_id}/response", "post", "postTunnelResponse")
 	const wantMCPServerInfoExample = `{"version":1,"channels":[{"name":"main","proc_affinity":true},{"name":"harpoon","proc_affinity":true}]}`
 	const wantModernHarpoonExample = `{"version":2,"channels":[{"name":"harpoon","stateless":true,"proc_affinity":true}]}`
