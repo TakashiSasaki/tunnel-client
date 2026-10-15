@@ -5,6 +5,13 @@ a private or localhost MCP (Model Context Protocol) server to ChatGPT, Codex,
 the Responses API, and AgentKit through an OpenAI-hosted MCP tunnel endpoint,
 while keeping the MCP server off the public internet.
 
+This CLI and its [Go SDK](#embed-as-a-go-sdk) run beside your private MCP server.
+Applications call the OpenAI-hosted `/v1/mcp/{tunnel_id}` endpoint through their
+MCP transport; the runtime receives those requests and delivers responses.
+The poll/response endpoints are the runtime's queue protocol for client
+implementers. See the [architecture](docs/architecture.md) for the request flow
+and the [protocol](docs/protocol.md) when building a compatible runtime.
+
 Use it when:
 
 - You have an MCP server on a laptop, VM, Kubernetes cluster, or private
