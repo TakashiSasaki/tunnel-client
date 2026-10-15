@@ -244,6 +244,27 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
               }
             }
           },
@@ -252,6 +273,29 @@
             "x-tunnel-error-codes": [
               "invalid_tunnel_id_format"
             ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -267,6 +311,29 @@
               "tunnel_missing_principals",
               "tunnel_use_forbidden"
             ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -289,6 +356,27 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
               }
             },
             "content": {
@@ -304,6 +392,29 @@
             "x-tunnel-error-codes": [
               "rate_limit_exceeded"
             ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -326,6 +437,27 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
               }
             },
             "content": {
@@ -343,6 +475,27 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
               }
             },
             "content": {
@@ -533,16 +686,85 @@
                   ]
                 }
               }
+            },
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
             }
           },
           "204": {
-            "description": "No Content"
+            "description": "No Content",
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            }
           },
           "400": {
             "description": "Tunnel-service error response (400). Stable codes: `invalid_tunnel_id_format`. Code details and mitigations are documented in the APIErrorBody.code schema.",
             "x-tunnel-error-codes": [
               "invalid_tunnel_id_format"
             ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -558,6 +780,29 @@
               "tunnel_missing_principals",
               "tunnel_use_forbidden"
             ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -586,6 +831,27 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
               }
             },
             "content": {
@@ -612,6 +878,27 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
               }
             },
             "content": {
@@ -629,6 +916,27 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
               }
             },
             "x-tunnel-error-codes": [
@@ -782,6 +1090,29 @@
                   "$ref": "#/components/schemas/TunnelResponseAck"
                 }
               }
+            },
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
             }
           },
           "400": {
@@ -792,6 +1123,29 @@
               "invalid_tunnel_client_response",
               "invalid_tunnel_id_format"
             ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -808,6 +1162,29 @@
               "tunnel_request_mismatch",
               "tunnel_use_forbidden"
             ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -821,6 +1198,29 @@
             "x-tunnel-error-codes": [
               "pending_request_not_found"
             ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -834,6 +1234,29 @@
             "x-tunnel-error-codes": [
               "request_body_too_large"
             ],
+            "headers": {
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -852,6 +1275,27 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
               }
             },
             "content": {
@@ -869,6 +1313,27 @@
                 "schema": {
                   "type": "string"
                 }
+              },
+              "Tunnel-Supported-Protocol-Versions": {
+                "description": "Supported tunnel wire profiles, oldest first. This advertisement does not negotiate or select a protocol for the request.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy, 2026-08-25"
+              },
+              "Tunnel-Min-Protocol-Version": {
+                "description": "Oldest supported tunnel wire profile. legacy remains supported; no new protocol requirement is enforced.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "legacy"
+              },
+              "Tunnel-Latest-Protocol-Version": {
+                "description": "Latest supported dated tunnel wire protocol. Advertising it does not deprecate a profile or start a retirement clock.",
+                "schema": {
+                  "type": "string"
+                },
+                "example": "2026-08-25"
               }
             },
             "content": {
