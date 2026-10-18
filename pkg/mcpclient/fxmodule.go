@@ -24,7 +24,9 @@ import (
 	"github.com/openai/tunnel-client/pkg/types"
 	"github.com/openai/tunnel-client/pkg/version"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"go.opentelemetry.io/otel/propagation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/trace/noop"
 	"go.uber.org/fx"
 
 	"github.com/openai/tunnel-client/pkg/mcpclient/internal"
@@ -537,7 +539,7 @@ func (w slogWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-func buildMcpHTTPTransport(logger *slog.Logger, loggingCfg *runtimeconfig.LoggingConfig, meterProvider *sdkmetric.MeterProvider, tlsBundle *tlsconfig.Bundle, clientCertificate *tlsconfig.ClientCertificate, unixSocketPath string, proxyURL *url.URL, serverURL *url.URL, extraHeaders map[string]string, discoveryExtraHeaders map[string]string) (http.RoundTripper, error) {
+func buildMcpHTTPTransport(logger *slog.Logger, loggingCfg *runtimeconfig.LoggingConfig, meterProvider *sdkmetric.MeterProvider, tlsBundle *tlsconfig.Bundle, clientCertificate *tlsconfig.ClientCertificate, unixSocketPath string, proxyURL *url.URL, serverURL *url.URL, extraHeaders map[string]string, discoveryExtraHeaders map[string]string, localTracing bool) (http.RoundTripper, error) {
 	// Order matters (outermost to innermost):
 	//   1. Static headers apply operator headers to the configured MCP origin.
 	//   2. Forwarding injects per-request connector headers last so they win conflicts.
@@ -575,10 +577,14 @@ func buildMcpHTTPTransport(logger *slog.Logger, loggingCfg *runtimeconfig.Loggin
 		}
 	}
 	base = tcmetrics.WithHTTPClientMetricAttributes(base)
-	base = otelhttp.NewTransport(
-		base,
-		otelhttp.WithMeterProvider(meterProvider),
-	)
+	options := []otelhttp.Option{otelhttp.WithMeterProvider(meterProvider)}
+	if localTracing {
+		options = append(options,
+			otelhttp.WithTracerProvider(noop.NewTracerProvider()),
+			otelhttp.WithPropagators(propagation.NewCompositeTextMapPropagator()),
+		)
+	}
+	base = otelhttp.NewTransport(base, options...)
 	forwardingLogger := logger.With(
 		slog.String(tclog.FieldComponent, tclog.ComponentMcpClient),
 		slog.String("transport", "forwarding_rt"),

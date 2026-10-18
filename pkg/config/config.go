@@ -27,6 +27,7 @@ type HarpoonTransportKind = runtimeconfig.HarpoonTransportKind
 type RuntimeConfig = runtimeconfig.RuntimeConfig
 type ControlPlaneConfig = runtimeconfig.ControlPlaneConfig
 type LoggingConfig = runtimeconfig.LoggingConfig
+type TracingConfig = runtimeconfig.TracingConfig
 type HealthConfig = runtimeconfig.HealthConfig
 type ProcessConfig = runtimeconfig.ProcessConfig
 type MCPConfig = runtimeconfig.MCPConfig
@@ -66,6 +67,7 @@ const (
 type Config struct {
 	ControlPlane ControlPlaneConfig
 	Logging      LoggingConfig
+	Tracing      TracingConfig
 	Health       HealthConfig
 	Process      ProcessConfig
 	Cloudflared  CloudflaredConfig
@@ -174,6 +176,7 @@ func fullConfigFromRuntime(
 	return &Config{
 		ControlPlane: core.ControlPlane,
 		Logging:      core.Logging,
+		Tracing:      core.Tracing,
 		Health:       core.Health,
 		Process:      core.Process,
 		Cloudflared:  cloudflared,

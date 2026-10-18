@@ -72,16 +72,17 @@ func (r *responseReceiptRoundTripper) RoundTrip(req *http.Request) (*http.Respon
 }
 
 type controlPlaneRoundTripper struct {
-	base           http.RoundTripper
-	apiKey         string
-	userAgent      string
-	organizationID string
-	mcpServerInfo  func() (string, error)
-	extraHeaders   map[string]string
-	logger         *slog.Logger
+	base                http.RoundTripper
+	apiKey              string
+	userAgent           string
+	organizationID      string
+	mcpServerInfo       func() (string, error)
+	extraHeaders        map[string]string
+	logger              *slog.Logger
+	traceContextEnabled bool
 }
 
-func newControlPlaneRoundTripper(base http.RoundTripper, apiKey, userAgent, organizationID string, mcpServerInfo func() (string, error), extraHeaders map[string]string, logger *slog.Logger) http.RoundTripper {
+func newControlPlaneRoundTripper(base http.RoundTripper, apiKey, userAgent, organizationID string, mcpServerInfo func() (string, error), extraHeaders map[string]string, logger *slog.Logger, tracingEnabled ...bool) http.RoundTripper {
 	if base == nil {
 		base = tctransport.CloneDefault()
 	}
@@ -89,13 +90,14 @@ func newControlPlaneRoundTripper(base http.RoundTripper, apiKey, userAgent, orga
 		panic("control-plane round tripper: logger is required")
 	}
 	return &controlPlaneRoundTripper{
-		base:           base,
-		apiKey:         apiKey,
-		userAgent:      userAgent,
-		organizationID: organizationID,
-		mcpServerInfo:  mcpServerInfo,
-		extraHeaders:   extraHeaders,
-		logger:         logger,
+		base:                base,
+		apiKey:              apiKey,
+		userAgent:           userAgent,
+		organizationID:      organizationID,
+		mcpServerInfo:       mcpServerInfo,
+		extraHeaders:        extraHeaders,
+		logger:              logger,
+		traceContextEnabled: len(tracingEnabled) > 0 && tracingEnabled[0],
 	}
 }
 
@@ -108,6 +110,9 @@ func (c *controlPlaneRoundTripper) RoundTrip(req *http.Request) (*http.Response,
 	req.Header.Set(version.WireProtocolHeaderName, version.WireProtocolVersion)
 	req.Header.Set(clientinstance.HeaderName, clientinstance.ID())
 	req.Header.Set(clientcapabilities.HeaderName, clientcapabilities.Advertised())
+	if c.traceContextEnabled {
+		req.Header.Set(clientcapabilities.HeaderName, clientcapabilities.Advertised()+","+clientcapabilities.TraceContextV1)
+	}
 	if c.mcpServerInfo != nil {
 		mcpServerInfo, err := c.mcpServerInfo()
 		if err != nil {
