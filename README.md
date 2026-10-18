@@ -51,6 +51,9 @@ then read the onboarding guide below.
   Trace forwarding is disabled by default; opt in with
   `--mcp.forward-trace-context` to carry W3C trace context in MCP `params._meta`
   over stdio and Streamable HTTP.
+  Opt-in [local span export](docs/configuration.md#local-tracing) uses
+  `--tracing.enabled --tracing.file=/private/new-trace.jsonl`. Complete traces
+  require compatible service queue handoff and caller parent propagation first.
 - **Using a namespaced tunnel ID?** Preserve the full ID returned by the service.
   The client accepts legacy IDs and aliases with a four-character namespace;
   see [tunnel identifiers](docs/protocol.md#scope).

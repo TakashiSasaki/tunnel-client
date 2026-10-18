@@ -582,7 +582,8 @@ routing, streaming, OAuth discovery, and common setup pitfalls, see
   - When enabled, valid tunnel-supplied W3C `traceparent` and optional
     `tracestate` are forwarded through MCP request `params._meta` over stdio
     and Streamable HTTP. Existing caller trace fields in metadata or request
-    headers take precedence.
+    headers take precedence when local tracing is disabled. With local tracing
+    enabled, the separate metadata handoff described below applies.
     This option adds no baggage and does not inject HTTP headers.
   - The MCP server must consume request metadata to connect its traces.
     Instrumentation that reads only HTTP tracing headers may not consume it.
@@ -885,6 +886,70 @@ later OAuth discovery commands or registry mutations.
   - Env: `HARPOON_HOSTS_INCLUDE_PRIVATE`
   - Default: `true`
   - Behavior: includes RFC1918 IPv4 plus IPv6 ULA (fc00::/7).
+
+## Local tracing
+
+Local tracing is disabled by default in every binary and the Go SDK. Configure
+`--tracing.enabled` / `TRACING_ENABLED` / `tracing.enabled` and
+`--tracing.file` / `TRACING_FILE` / `tracing.file`. Flags override environment,
+which overrides YAML; explicit `false` disables lower-precedence opt-ins.
+Supplying a file alone does not enable tracing. The SDK uses `Config.Tracing`
+and `Config.ForwardTraceContext`.
+
+```yaml
+tracing:
+  enabled: true
+  file: /private/new-trace.jsonl
+mcp:
+  forward_trace_context: true
+```
+
+The file must be a new regular file in an existing directory; existing files,
+symlinks, and special files are rejected. Files use mode `0600` on Unix and
+inherit the directory's access controls on Windows. Choose a new path each run.
+Remove these options before downgrading to a client that does not support them.
+
+Enabling tracing advertises `trace-context-v1`. The client accepts each command's
+validated v00 `traceparent` as its parent, never the poll connection's parent.
+Absent, invalid, or oversized context produces no local trace and leaves command
+execution unchanged. The original parent's sampled flag controls recording;
+the client never forces sampling or creates an unrelated root. Each request has
+fixed `tunnel.client.dispatch`, `tunnel.client.mcp`, and
+`tunnel.client.upload` spans. Retries remain inside the response upload span.
+With `mcp.forward_trace_context` enabled, the MCP span context is forwarded
+through `params._meta`, preserving caller-owned metadata trace fields. Existing
+Per-command forwarded HTTP headers remain byte-for-byte unchanged but do not
+suppress this separately opted-in metadata handoff. Operator-configured
+`mcp.extra_headers` containing `traceparent` or `tracestate` still suppress
+metadata forwarding, including with both options enabled or an empty header
+value. A metadata-aware target uses the MCP child; a
+header-only target retains the original HTTP parent. The target must
+extract that metadata to create its own execution span. Local tracing does not
+inject HTTP tracing headers or propagate baggage or incoming `tracestate`.
+
+JSONL contains only `name`, `trace_id`, `span_id`, `parent_span_id`, `start_time`,
+`end_time`, and `status`. It excludes payloads, prompts, credentials, headers,
+arbitrary attributes, resource fields, events, and exception descriptions.
+An isolated tracing provider leaves the application's global provider unchanged.
+Export runs asynchronously with a 1024-record queue and a 64 MiB file limit.
+Queue saturation drops records instead of delaying responses. A write failure or
+file limit stops writes for that run; command execution continues. Shutdown
+drains after command workers stop, with at most one second of exporter waiting.
+A blocked operating-system write can retain the single writer until it returns.
+
+Privacy-safe counters under `tunnel_client_tracing_*` report commands, missing
+and invalid carriers, unsampled parents, exported records, dropped records, and
+export failures. Trace IDs are never metric labels. Compare complete-trace
+coverage and request latency, CPU, and memory with a flags-off baseline; stop a
+canary on unexpected missing parents, drops, export failures, or overhead.
+
+The client can ship with flags off before service support. Enabling complete
+traces requires the service's queue/poll carrier support and upstream request
+parent handoff to be deployed and validated first. Older services may ignore the
+capability and omit the carrier; those commands continue without local spans.
+Start with isolated synthetic traces, then a separately authorized small canary
+before expanding. Roll back by disabling `tracing.enabled` and
+`mcp.forward_trace_context`; retain compatible service support during rollback.
 
 ## Logging
 

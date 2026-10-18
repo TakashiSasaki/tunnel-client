@@ -22,6 +22,8 @@ import (
 	"github.com/jpillora/backoff"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	otelmetric "go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/openai/tunnel-client/pkg/controlplane"
 	"github.com/openai/tunnel-client/pkg/controlplane/apierror"
@@ -564,10 +566,14 @@ func buildControlPlaneHTTPTransportWithLogging(cfg *runtimeconfig.ControlPlaneCo
 	}
 	base = newResponseReceiptRoundTripper(base)
 	base = tcmetrics.WithHTTPClientMetricAttributes(base)
-	base = otelhttp.NewTransport(
-		base,
-		otelhttp.WithMeterProvider(meterProvider),
-	)
+	instrumentationOptions := []otelhttp.Option{otelhttp.WithMeterProvider(meterProvider)}
+	if cfg.TraceContextEnabled {
+		instrumentationOptions = append(instrumentationOptions,
+			otelhttp.WithTracerProvider(noop.NewTracerProvider()),
+			otelhttp.WithPropagators(propagation.NewCompositeTextMapPropagator()),
+		)
+	}
+	base = otelhttp.NewTransport(base, instrumentationOptions...)
 	// A poll body can contain rich-header credentials, and the response body
 	// can contain results from the same invocation. Exclude both directions
 	// from raw capture even when the operator enables unsafe HTTP debugging.
@@ -583,6 +589,7 @@ func buildControlPlaneHTTPTransportWithLogging(cfg *runtimeconfig.ControlPlaneCo
 		cfg.MCPServerInfoHeader,
 		extraHeaders,
 		logger,
+		cfg.TraceContextEnabled,
 	), nil
 }
 
