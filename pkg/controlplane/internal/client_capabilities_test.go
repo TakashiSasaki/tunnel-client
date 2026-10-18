@@ -1,158 +1,25 @@
 package internal
 
 import (
-	"context"
-	"encoding/json"
 	"net/http"
-	"os"
-	"path/filepath"
-	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/baggage"
-	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/openai/tunnel-client/pkg/clientcapabilities"
 	"github.com/openai/tunnel-client/pkg/config"
 	"github.com/openai/tunnel-client/pkg/controlplane/wiretypes"
-	"github.com/openai/tunnel-client/pkg/runtimeconfig"
-	"github.com/openai/tunnel-client/pkg/tracing"
 	"github.com/openai/tunnel-client/pkg/tunnelctx"
 	"github.com/openai/tunnel-client/pkg/types"
 )
 
-func TestPostResponseRetriesWithinOneUploadSpan(t *testing.T) {
-	t.Parallel()
-	path := filepath.Join(t.TempDir(), "retry-trace.jsonl")
-	runtime, err := tracing.New(runtimeconfig.TracingConfig{Enabled: true, File: path})
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, runtime.Shutdown(context.Background())) })
-	ctx, dispatch := runtime.StartCommand(t.Context(), "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
-	ctx, upload := runtime.Start(ctx, tracing.Upload)
-	upload.SetAttributes(attribute.String("private_attribute", "sensitive-attribute"))
-	upload.AddEvent("sensitive-event")
-	ctx = responseContext(ctx, "sensitive-shard", "sensitive-caller-request")
-	client := newResponseRetryTestClient(t)
-	client.newResponseBackoff = deterministicResponseBackoff
-	var attempts []capturedRequest
-	var parents []trace.SpanContext
-	authTransport, ok := client.client.Transport.(*controlPlaneRoundTripper)
-	require.True(t, ok)
-	authTransport.base = roundTripFunc(func(request *http.Request) (*http.Response, error) {
-		parents = append(parents, trace.SpanContextFromContext(request.Context()))
-		attempts = append(attempts, captureRequest(t, request))
-		if len(attempts) == 1 {
-			return testHTTPResponse(request, http.StatusServiceUnavailable, nil), nil
-		}
-		return testHTTPResponse(request, http.StatusOK, nil), nil
-	})
-	var waits []time.Duration
-	client.retrySleep = func(retryContext context.Context, delay time.Duration) bool {
-		require.Equal(t, upload.SpanContext(), trace.SpanContextFromContext(retryContext))
-		waits = append(waits, delay)
-		return true
-	}
-	response := types.NewTunnelResponse(types.DefaultChannel,
-		json.RawMessage(`{"jsonrpc":"2.0","id":1,"result":{"private":"sensitive-payload"}}`),
-		http.StatusOK, http.Header{"X-Private": {"sensitive-header"}, "Mcp-Session-Id": {"sensitive-session"}})
-	_, err = client.PostResponse(ctx, types.RequestID("sensitive-response-id"), response)
-	require.NoError(t, err)
-	upload.End()
-	dispatch.End()
-	require.NoError(t, runtime.Shutdown(context.Background()))
-	require.Len(t, attempts, 2)
-	require.Equal(t, []time.Duration{defaultBackoffMin}, waits)
-	require.Equal(t, []trace.SpanContext{upload.SpanContext(), upload.SpanContext()}, parents)
-	require.Equal(t, attempts[0].body, attempts[1].body)
-	require.Equal(t, attempts[0].headers, attempts[1].headers)
-	require.Equal(t, attempts[0].path, attempts[1].path)
-	require.Contains(t, attempts[0].body, "sensitive-payload")
-	require.NotContains(t, attempts[0].body, "sensitive-header")
-	require.Contains(t, attempts[0].body, "sensitive-session")
-	require.Equal(t, "sensitive-shard", attempts[0].headers.Get(wiretypes.ShardTokenHeader))
-	require.Equal(t, "Bearer test-api-key", attempts[0].headers.Get("Authorization"))
-	data, err := os.ReadFile(path)
-	require.NoError(t, err)
-	for _, forbidden := range []string{"sensitive", "private_attribute", "test-api-key", "Authorization", "attributes", "events"} {
-		require.NotContains(t, string(data), forbidden)
-	}
-	records := make(map[string]tracing.Record)
-	count := 0
-	for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
-		var fields map[string]json.RawMessage
-		require.NoError(t, json.Unmarshal([]byte(line), &fields))
-		require.Len(t, fields, 7)
-		var record tracing.Record
-		require.NoError(t, json.Unmarshal([]byte(line), &record))
-		records[record.Name] = record
-		count++
-	}
-	require.Equal(t, 2, count)
-	require.Len(t, records, 2)
-	require.Equal(t, "00f067aa0ba902b7", records[tracing.Dispatch].ParentSpanID)
-	require.Equal(t, dispatch.SpanContext().SpanID().String(), records[tracing.Upload].ParentSpanID)
-	require.Equal(t, upload.SpanContext().SpanID().String(), records[tracing.Upload].SpanID)
-	for _, record := range records {
-		require.Equal(t, dispatch.SpanContext().TraceID().String(), record.TraceID)
-	}
-}
-
-func TestLocalTracingDoesNotInjectControlPlaneHeaders(t *testing.T) {
-	previous := otel.GetTextMapPropagator()
-	if len(previous.Fields()) == 0 {
-		previous = propagation.NewCompositeTextMapPropagator()
-	}
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
-	t.Cleanup(func() { otel.SetTextMapPropagator(previous) })
-	runtime, err := tracing.New(runtimeconfig.TracingConfig{Enabled: true, File: filepath.Join(t.TempDir(), "trace.jsonl")})
-	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, runtime.Shutdown(context.Background())) })
-	member, err := baggage.NewMember("private", "never-export")
-	require.NoError(t, err)
-	bag, err := baggage.New(member)
-	require.NoError(t, err)
-	ctx, span := runtime.StartCommand(baggage.ContextWithBaggage(t.Context(), bag), "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
-	defer span.End()
-	server := newHTTPTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
-		for _, name := range []string{"traceparent", "tracestate", "baggage"} {
-			assert.Empty(t, request.Header.Values(name))
-		}
-		w.WriteHeader(http.StatusNoContent)
-	}))
-	client, err := NewTunnelServiceClient(t.Context(), &config.ControlPlaneConfig{
-		BaseURL: mustParseURL(t, server.URL), TunnelID: "local", APIKey: "fixture",
-		TraceContextEnabled: true,
-	}, nil, newDiscardLogger(), &config.LoggingConfig{}, testMeterProvider)
-	require.NoError(t, err)
-	_, _, err = client.Poll(ctx, 1)
-	require.NoError(t, err)
-}
-
 func TestClientCapabilitiesOnEveryControlPlaneOperation(t *testing.T) {
 	t.Parallel()
-	for _, enabled := range []bool{false, true} {
-		t.Run(map[bool]string{false: "default", true: "tracing"}[enabled], func(t *testing.T) {
-			t.Parallel()
-			testClientCapabilitiesOnEveryControlPlaneOperation(t, enabled)
-		})
-	}
-}
-
-func testClientCapabilitiesOnEveryControlPlaneOperation(t *testing.T, enabled bool) {
 	const commandToken = "legacy command,token"
 	requests := make(chan string, 4)
 	server := newHTTPTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		want := clientcapabilities.WrongClusterV1
-		if enabled {
-			want += "," + clientcapabilities.TraceContextV1
-		}
-		assert.Equal(t, []string{want}, r.Header.Values(clientcapabilities.HeaderName), "every control-plane request advertises implemented client capabilities")
+		assert.Equal(t, []string{clientcapabilities.WrongClusterV1}, r.Header.Values(clientcapabilities.HeaderName), "every control-plane request advertises implemented client capabilities")
 		assert.Empty(t, r.Header.Values("X-Tunnel-Routing-Capability"))
 		requests <- r.Method + " " + r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
@@ -175,10 +42,9 @@ func testClientCapabilitiesOnEveryControlPlaneOperation(t *testing.T, enabled bo
 		}
 	}))
 	client, err := NewTunnelServiceClient(t.Context(), &config.ControlPlaneConfig{
-		BaseURL:             mustParseURL(t, server.URL),
-		TunnelID:            "capabilities",
-		APIKey:              "fixture-api-key",
-		TraceContextEnabled: enabled,
+		BaseURL:  mustParseURL(t, server.URL),
+		TunnelID: "capabilities",
+		APIKey:   "fixture-api-key",
 		ExtraHeaders: map[string]string{
 			"x-tunnel-client-capabilities": "unimplemented-v1",
 			"x-tunnel-shard-token":         "configuration-cannot-set-routing",

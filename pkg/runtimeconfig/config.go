@@ -167,7 +167,6 @@ var commonFlagAliases = []flagAlias{
 type Config struct {
 	ControlPlane ControlPlaneConfig
 	Logging      LoggingConfig
-	Tracing      TracingConfig
 	Health       HealthConfig
 	Process      ProcessConfig
 	MCP          MCPConfig
@@ -189,7 +188,6 @@ type RuntimeConfig struct {
 
 // ControlPlaneConfig defines how the client reaches the tunnel control plane.
 type ControlPlaneConfig struct {
-	TraceContextEnabled   bool
 	BaseURL               *url.URL
 	UnixSocketPath        string
 	URLPath               string
@@ -283,14 +281,13 @@ type CloudflaredConfig struct {
 // MCPChannelBinding first, then projected to the legacy fields only for
 // compatibility.
 type MCPConfig struct {
-	TraceContextEnabled bool
-	ServerURL           *url.URL
-	UnixSocketPath      string
-	Command             string
-	CommandArgs         []string
-	TransportKind       MCPTransportKind
-	ClientCertificate   *tlsconfig.ClientCertificate
-	ChannelBindings     []MCPChannelBinding
+	ServerURL         *url.URL
+	UnixSocketPath    string
+	Command           string
+	CommandArgs       []string
+	TransportKind     MCPTransportKind
+	ClientCertificate *tlsconfig.ClientCertificate
+	ChannelBindings   []MCPChannelBinding
 	// AllowNoMain is set only for an explicit poll allowlist that excludes main.
 	// It keeps zero-value MCPConfig compatibility for older callers.
 	AllowNoMain bool
@@ -567,8 +564,6 @@ func RegisterFlags(fs *pflag.FlagSet, flavor Flavor) {
 	fs.StringArray("mcp.command", nil, "Command to launch an MCP server over stdio (repeatable; format command=...,channel=...) (env.MCP_COMMAND)")
 	fs.Bool("mcp.stdio-send-initialized-notification", false, "Opt in to sending notifications/initialized after a successful stdio initialize response (env.MCP_STDIO_SEND_INITIALIZED_NOTIFICATION)")
 	fs.Bool("mcp.forward-trace-context", false, "Opt in to forwarding traceparent/tracestate through MCP params._meta over stdio and HTTP (env.MCP_FORWARD_TRACE_CONTEXT)")
-	fs.Bool("tracing.enabled", false, "Opt in to local request tracing (env.TRACING_ENABLED)")
-	fs.String("tracing.file", "", "New local JSONL trace file, required when tracing is enabled (env.TRACING_FILE)")
 	fs.String("mcp.http-proxy", "", "Outbound HTTP proxy for MCP (format <url|env:VAR>)")
 	fs.String("mcp.client-cert", "", "Path to PEM client certificate for MCP mTLS (format <path|env:VAR>) (env.MCP_CLIENT_CERT)")
 	fs.String("mcp.client-key", "", "Path to PEM client private key for MCP mTLS (format <path|env:VAR>) (env.MCP_CLIENT_KEY)")
@@ -699,12 +694,6 @@ func loadRuntimeFromFlagSet(fs *pflag.FlagSet, lookupEnv func(string) (string, b
 	if err != nil {
 		return nil, nil, lookupEnv, err
 	}
-	tracing, err := buildTracingConfig(fs, lookupEnv)
-	if err != nil {
-		return nil, nil, lookupEnv, err
-	}
-	controlPlane.TraceContextEnabled = tracing.Enabled
-	mcp.TraceContextEnabled = tracing.Enabled
 	health, err := buildHealthConfig(fs, lookupEnv)
 	if err != nil {
 		return nil, nil, lookupEnv, err
@@ -743,7 +732,6 @@ func loadRuntimeFromFlagSet(fs *pflag.FlagSet, lookupEnv func(string) (string, b
 	cfg := &Config{
 		ControlPlane: controlPlane,
 		Logging:      logging,
-		Tracing:      tracing,
 		Health:       health,
 		Process:      process,
 		MCP:          mcp,

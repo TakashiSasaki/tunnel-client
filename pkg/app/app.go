@@ -22,7 +22,6 @@ import (
 	"github.com/openai/tunnel-client/pkg/process"
 	"github.com/openai/tunnel-client/pkg/proxyhealth"
 	"github.com/openai/tunnel-client/pkg/tlsconfig"
-	"github.com/openai/tunnel-client/pkg/tracing"
 )
 
 // RuntimeOptions controls optional app surfaces for embedders.
@@ -45,17 +44,12 @@ func OptionsWithRuntime(cfg *config.Config, runtime RuntimeOptions, opts ...fx.O
 	if cfg == nil {
 		return append([]fx.Option{fx.Error(errors.New("tunnel-client config is nil"))}, opts...)
 	}
-	resolved := *cfg
-	cfg = &resolved
-	cfg.ControlPlane.TraceContextEnabled = cfg.Tracing.Enabled
-	cfg.MCP.TraceContextEnabled = cfg.Tracing.Enabled
 
 	base := []fx.Option{
 		fx.Supply(
 			cfg,
 			&cfg.ControlPlane,
 			&cfg.Logging,
-			&cfg.Tracing,
 			&cfg.Health,
 			&cfg.Process,
 			&cfg.Cloudflared,
@@ -66,7 +60,6 @@ func OptionsWithRuntime(cfg *config.Config, runtime RuntimeOptions, opts ...fx.O
 		),
 		fx.Provide(func() *tlsconfig.Bundle { return cfg.TLS }),
 		log.Module,
-		tracing.Module,
 		dispatcher.Module,
 		controlplane.Module,
 		harpoon.Module,

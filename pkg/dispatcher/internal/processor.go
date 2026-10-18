@@ -26,7 +26,6 @@ import (
 	"github.com/openai/tunnel-client/pkg/oauth"
 	"github.com/openai/tunnel-client/pkg/runtimeconfig"
 	"github.com/openai/tunnel-client/pkg/runtimeharpoon/hostbus"
-	"github.com/openai/tunnel-client/pkg/tracing"
 	"github.com/openai/tunnel-client/pkg/tunnelctx"
 	"github.com/openai/tunnel-client/pkg/types"
 )
@@ -73,7 +72,6 @@ type processorParams struct {
 	HostBus         hostbus.HostRegistrationBus `optional:"true"`
 	ControlPlaneCfg *runtimeconfig.ControlPlaneConfig
 	MeterProvider   *sdkmetric.MeterProvider
-	Tracing         *tracing.Runtime `optional:"true"`
 }
 
 type mcpProcessor struct {
@@ -82,7 +80,6 @@ type mcpProcessor struct {
 	tunnelResponder     controlplane.Responder
 	connectionMaxTTL    time.Duration
 	forwardTraceContext bool
-	tracing             *tracing.Runtime
 	metrics             *processorMetrics
 	tunnelID            types.TunnelID
 	oauthHTTPClient     *http.Client
@@ -103,8 +100,6 @@ type responsePostResult struct {
 // postTunnelResponse wraps Responder.PostResponse and preserves its request ID
 // even when the post fails.
 func (p *mcpProcessor) postTunnelResponse(ctx context.Context, requestID types.RequestID, response *types.TunnelResponse) responsePostResult {
-	ctx, finishTrace := p.startUploadTrace(ctx, response)
-	defer finishTrace()
 	tunnelServiceRequestID, err := p.tunnelResponder.PostResponse(ctx, requestID, response)
 	if err != nil {
 		recordWorkFailure(ctx, err, 0)
@@ -306,7 +301,6 @@ func NewProcessor(p processorParams) (Processor, error) {
 		tunnelResponder:     p.TunnelResponder,
 		connectionMaxTTL:    p.MCPConfig.ConnectionMaxTTL,
 		forwardTraceContext: forwardTraceContext,
-		tracing:             p.Tracing,
 		metrics:             processorMetrics,
 		tunnelID:            p.ControlPlaneCfg.TunnelID,
 		oauthHTTPClient:     p.OAuthHTTPClient,
@@ -326,8 +320,6 @@ func (p *mcpProcessor) Process(ctx context.Context, cmd controlplane.PolledComma
 	if cmd == nil {
 		return fmt.Errorf("dispatcher processor: nil command")
 	}
-	ctx, finishTrace := p.startCommandTrace(ctx, cmd)
-	defer func() { finishTrace(processErr) }()
 
 	requestID := cmd.RequestID()
 	ctx = tunnelctx.ContextWithRequestID(ctx, requestID.String())
@@ -491,8 +483,6 @@ func (p *mcpProcessor) processJsonRpcCommand(ctx context.Context, logger *slog.L
 	}
 
 	isNotification := !req.ID.IsValid()
-	ctx, finishTrace := p.startTargetTrace(ctx)
-	defer finishTrace()
 	if !isNotification {
 		ctx = tunnelctx.ContextWithRPCRequestID(ctx, req.ID)
 		logger = tclog.LoggerWithContextIdentifiers(ctx, p.logger)
@@ -575,9 +565,7 @@ func (p *mcpProcessor) processJsonRpcCommand(ctx context.Context, logger *slog.L
 
 	headers := ensureDefaultAcceptHeader(cmd.Headers())
 	if p.forwardTraceContext && (channelCfg.transportKind == runtimeconfig.MCPTransportStdio || channelCfg.transportKind == runtimeconfig.MCPTransportHTTPStreamable) {
-		if p.tracing.Enabled() {
-			req = forwardTraceContext(req, nil, commandTraceCarrier(ctx))
-		} else if provider, ok := cmd.(controlplane.TraceContextProvider); ok {
+		if provider, ok := cmd.(controlplane.TraceContextProvider); ok {
 			req = forwardTraceContext(req, headers, provider.TraceContext())
 		}
 	}
@@ -596,7 +584,6 @@ func (p *mcpProcessor) processJsonRpcCommand(ctx context.Context, logger *slog.L
 	}
 	respHeader := writeResult.ResponseHeaders
 	if preserved := writeResult.PreservedError; preserved != nil {
-		markCommandTraceFailed(ctx)
 		encodedError := preserved.Payload()
 		respHeader = jsonRPCResponseHeaders(ctx, logger, respHeader)
 		tunnelResponse := types.NewTunnelResponse(channel, encodedError, statusCode, respHeader)
@@ -995,9 +982,6 @@ func (p *mcpProcessor) forwardResponses(ctx context.Context, conn mcpclient.Forw
 		// Shared stdio must survive response delivery failures as well as expiry:
 		// its released lifecycle slot may already be serving the next command.
 		mcpResponseReceived = true
-		if response.Error != nil {
-			markCommandTraceFailed(ctx)
-		}
 		finalResponse := true
 
 		// Ensure final JSON-RPC responses present as application/json to the control plane,

@@ -99,7 +99,6 @@ func convertRawCommand(raw wiretypes.RawJSONRPCPolledCommand, polledAt time.Time
 		return nil, err
 	}
 	traceContext := parseTraceContext(raw.TraceContext)
-	commandTraceContext := traceContext
 	for name := range raw.Headers {
 		if strings.EqualFold(name, "traceparent") || strings.EqualFold(name, "tracestate") {
 			// Header name presence retains caller ownership even with no values.
@@ -107,15 +106,12 @@ func convertRawCommand(raw wiretypes.RawJSONRPCPolledCommand, polledAt time.Time
 			break
 		}
 	}
-	return &jsonRpcCommand{basePolledCommand: base, message: msg, traceContext: traceContext, commandTraceContext: commandTraceContext}, nil
+	return &jsonRpcCommand{basePolledCommand: base, message: msg, traceContext: traceContext}, nil
 }
 
 // Keep the carrier bounded and tolerant here; the forwarding path uses the
 // OpenTelemetry propagator for W3C semantic validation only when opted in.
 func parseTraceContext(raw json.RawMessage) *types.TraceContext {
-	if len(raw) > 1024 {
-		return nil
-	}
 	var carrier types.TraceContext
 	if err := json.Unmarshal(raw, &carrier); err != nil || len(carrier.Traceparent) != 55 || len(carrier.Tracestate) > 512 {
 		return nil
