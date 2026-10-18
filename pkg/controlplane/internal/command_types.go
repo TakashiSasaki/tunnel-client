@@ -75,9 +75,8 @@ func (c *basePolledCommand) commandType() wiretypes.CommandType { return "" }
 // jsonRpcCommand represents a JSON-RPC command; it implements JsonRpcCommand via Message().
 type jsonRpcCommand struct {
 	basePolledCommand
-	message             jsonrpc.Message
-	traceContext        *types.TraceContext
-	commandTraceContext *types.TraceContext
+	message      jsonrpc.Message
+	traceContext *types.TraceContext
 }
 
 func (c *jsonRpcCommand) TraceContext() *types.TraceContext {
@@ -85,14 +84,6 @@ func (c *jsonRpcCommand) TraceContext() *types.TraceContext {
 		return nil
 	}
 	result := *c.traceContext
-	return &result
-}
-
-func (c *jsonRpcCommand) CommandTraceContext() *types.TraceContext {
-	if c.commandTraceContext == nil {
-		return nil
-	}
-	result := *c.commandTraceContext
 	return &result
 }
 

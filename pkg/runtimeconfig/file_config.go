@@ -32,7 +32,6 @@ type fileConfig struct {
 	HTTPProxy     *string                `yaml:"http_proxy"`
 	ControlPlane  fileControlPlaneConfig `yaml:"control_plane"`
 	Log           fileLogConfig          `yaml:"log"`
-	Tracing       fileTracingConfig      `yaml:"tracing"`
 	Health        fileHealthConfig       `yaml:"health"`
 	AdminUI       fileAdminUICompat      `yaml:"admin_ui"`
 	Process       fileProcessConfig      `yaml:"process"`
@@ -63,11 +62,6 @@ type fileLogConfig struct {
 	Format        *string `yaml:"format"`
 	File          *string `yaml:"file"`
 	HTTPRawUnsafe *bool   `yaml:"http_raw_unsafe"`
-}
-
-type fileTracingConfig struct {
-	Enabled *bool   `yaml:"enabled"`
-	File    *string `yaml:"file"`
 }
 
 type fileHealthConfig struct {
@@ -350,8 +344,6 @@ func (c fileConfig) toEnv(lookupEnv func(string) (string, bool)) (map[string]str
 	setString(env, "LOG_FORMAT", c.Log.Format)
 	setString(env, "LOG_FILE", c.Log.File)
 	setBool(env, "LOG_HTTP_RAW_UNSAFE", c.Log.HTTPRawUnsafe)
-	setBool(env, "TRACING_ENABLED", c.Tracing.Enabled)
-	setString(env, "TRACING_FILE", c.Tracing.File)
 
 	if err := setResolvedString(env, "HEALTH_LISTEN_ADDR", "health.listen_addr", c.Health.ListenAddr, lookupEnv); err != nil {
 		return nil, err
