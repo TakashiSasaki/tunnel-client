@@ -316,6 +316,7 @@ func TestBuildMcpHTTPTransportRejectsInvalidExtraHeaders(t *testing.T) {
 				mustParseURL(t, "https://example.invalid/mcp"),
 				tc.extraHeaders,
 				tc.discoveryHeaders,
+				false,
 			)
 			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
 				t.Fatalf("expected %q error, got %v", tc.wantErr, err)

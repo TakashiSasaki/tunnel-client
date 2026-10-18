@@ -1273,6 +1273,7 @@ func runtimeCoreFromFull(cfg *Config) runtimeconfig.Config {
 	return runtimeconfig.Config{
 		ControlPlane: cfg.ControlPlane,
 		Logging:      cfg.Logging,
+		Tracing:      cfg.Tracing,
 		Health:       cfg.Health,
 		Process:      cfg.Process,
 		MCP:          cfg.MCP,
