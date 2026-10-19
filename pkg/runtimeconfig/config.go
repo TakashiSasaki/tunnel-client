@@ -46,6 +46,81 @@ const (
 	HarpoonTransportHTTPStreamable HarpoonTransportKind = "http-streamable"
 )
 
+// RequestIDForwarding selects the HTTP egress surfaces that receive the
+// original inbound X-Request-Id. The zero value preserves MCP forwarding for
+// callers that construct Config directly instead of loading it from a file.
+type RequestIDForwarding uint8
+
+const (
+	ForwardRequestIDMCP RequestIDForwarding = 1 << iota
+	ForwardRequestIDHarpoon
+	ForwardRequestIDOAuth
+	ForwardRequestIDNone
+)
+
+// AllowsMCP reports whether the original request ID should be forwarded to an
+// MCP HTTP target. A zero-value Config retains the historical MCP behavior.
+func (surfaces RequestIDForwarding) AllowsMCP() bool {
+	return surfaces&ForwardRequestIDNone == 0 && (surfaces == 0 || surfaces&ForwardRequestIDMCP != 0)
+}
+
+// AllowsHarpoon reports whether the original request ID should be forwarded to
+// a Harpoon HTTP target.
+func (surfaces RequestIDForwarding) AllowsHarpoon() bool {
+	return surfaces&ForwardRequestIDNone == 0 && surfaces&ForwardRequestIDHarpoon != 0
+}
+
+// AllowsOAuth reports whether the original request ID should be forwarded on
+// eligible OAuth HTTP requests. OAuth is opt-in, including for zero-value Config.
+func (surfaces RequestIDForwarding) AllowsOAuth() bool {
+	return surfaces&ForwardRequestIDNone == 0 && surfaces&ForwardRequestIDOAuth != 0
+}
+
+func parseRequestIDForwarding(raw string) (RequestIDForwarding, error) {
+	if raw == "" {
+		return 0, errors.New("forward_request_id must contain mcp, harpoon, oauth, or none")
+	}
+	var surfaces RequestIDForwarding
+	for name := range strings.SplitSeq(raw, ",") {
+		switch strings.TrimSpace(name) {
+		case "mcp":
+			surfaces |= ForwardRequestIDMCP
+		case "harpoon":
+			surfaces |= ForwardRequestIDHarpoon
+		case "oauth":
+			surfaces |= ForwardRequestIDOAuth
+		case "none":
+			surfaces |= ForwardRequestIDNone
+		case "":
+			return 0, errors.New("forward_request_id contains an empty surface")
+		default:
+			return 0, fmt.Errorf("forward_request_id has unknown surface %q", strings.TrimSpace(name))
+		}
+	}
+	if surfaces&ForwardRequestIDNone != 0 && surfaces != ForwardRequestIDNone {
+		return 0, errors.New("forward_request_id cannot combine none with another surface")
+	}
+	return surfaces, nil
+}
+
+func resolveRequestIDForwarding(fs *pflag.FlagSet, lookupEnv func(string) (string, bool)) (RequestIDForwarding, error) {
+	if flag := fs.Lookup("forward-request-id"); flag != nil && flag.Changed {
+		surfaces, err := parseRequestIDForwarding(flag.Value.String())
+		if err != nil {
+			return 0, fmt.Errorf("invalid --forward-request-id: %w", err)
+		}
+		return surfaces, nil
+	}
+	if raw, ok := lookupEnv("FORWARD_REQUEST_ID"); ok {
+		surfaces, err := parseRequestIDForwarding(raw)
+		if err != nil {
+			return 0, fmt.Errorf("invalid FORWARD_REQUEST_ID: %w", err)
+		}
+		return surfaces, nil
+	}
+	return ForwardRequestIDMCP, nil
+}
+
 const (
 	defaultControlPlaneBaseURL                         = "https://api.openai.com"
 	defaultControlPlaneMTLSBaseURL                     = "https://mtls.api.openai.com"
@@ -303,7 +378,10 @@ type MCPConfig struct {
 	StdioSendInitializedNotification bool
 	// ForwardTraceContext opts in to forwarding validated tunnel trace context
 	// through MCP params._meta. False preserves the caller's request metadata.
-	ForwardTraceContext   bool
+	ForwardTraceContext bool
+	// ForwardRequestID controls automatic propagation of the original inbound
+	// HTTP X-Request-Id to selected MCP HTTP, Harpoon, and OAuth egress requests.
+	ForwardRequestID      RequestIDForwarding
 	ConnectionMaxTTL      time.Duration
 	MaxConcurrentRequests int
 	ExtraHeaders          map[string]string
@@ -525,6 +603,7 @@ func WriteUsage(fs *pflag.FlagSet, w io.Writer) {
 	_, _ = fmt.Fprintln(fs.Output(), "  CONTROL_PLANE_TUNNEL_ID\tIdentifier for this client/tunnel (required)")
 	_, _ = fmt.Fprintln(fs.Output(), "  MCP_SERVER_URL or MCP_COMMAND\tMain MCP target (required unless poll channels exclude main)")
 	_, _ = fmt.Fprintln(fs.Output(), "  MCP_FORWARD_TRACE_CONTEXT\tOpt in to forwarding traceparent/tracestate through MCP params._meta (default: false)")
+	_, _ = fmt.Fprintln(fs.Output(), "  FORWARD_REQUEST_ID\tHTTP egress surfaces for the original X-Request-Id (default: mcp)")
 }
 
 // RegisterFlags attaches only the approved customer runtime flags to fs.
@@ -536,6 +615,7 @@ func RegisterFlags(fs *pflag.FlagSet, flavor Flavor) {
 	}
 	registerTLSFlags(fs)
 	fs.String("config", "", "Path to YAML config file (env.TUNNEL_CLIENT_CONFIG). Precedence: flags > environment > YAML > defaults")
+	fs.String("forward-request-id", "mcp", "HTTP egress surfaces receiving the original X-Request-Id: comma-separated mcp, harpoon, oauth (queued discovery at configured MCP origin only); or none (env.FORWARD_REQUEST_ID)")
 	fs.String("profile", "", "Profile name to load from the profile directory (env.TUNNEL_CLIENT_PROFILE)")
 	fs.String("profile-file", "", "Path to a specific profile YAML file (env.TUNNEL_CLIENT_PROFILE_FILE)")
 	fs.String("profile-dir", "", "Directory containing profile YAML files (env.TUNNEL_CLIENT_PROFILE_DIR; default $XDG_CONFIG_HOME/tunnel-client or ~/.config/tunnel-client)")
@@ -678,6 +758,10 @@ func loadRuntimeFromFlagSet(fs *pflag.FlagSet, lookupEnv func(string) (string, b
 		return nil, nil, lookupEnv, err
 	}
 	lookupEnv = lookupEnvWithFileValues(lookupEnv, fileValues)
+	forwardRequestID, err := resolveRequestIDForwarding(fs, lookupEnv)
+	if err != nil {
+		return nil, nil, lookupEnv, err
+	}
 
 	tlsBundle, err := buildTLSBundle(fs, lookupEnv)
 	if err != nil {
@@ -695,6 +779,7 @@ func loadRuntimeFromFlagSet(fs *pflag.FlagSet, lookupEnv func(string) (string, b
 	if err != nil {
 		return nil, nil, lookupEnv, err
 	}
+	mcp.ForwardRequestID = forwardRequestID
 	logging, err := buildLoggingConfig(fs, lookupEnv)
 	if err != nil {
 		return nil, nil, lookupEnv, err

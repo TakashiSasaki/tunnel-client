@@ -54,6 +54,13 @@ then read the onboarding guide below.
   Opt-in [local span export](docs/configuration.md#local-tracing) uses
   `--tracing.enabled --tracing.file=/private/new-trace.jsonl`. Complete traces
   require compatible service queue handoff and caller parent propagation first.
+- **Forwarding the original HTTP request ID?** MCP HTTP forwarding is enabled
+  by default. Use `--forward-request-id=mcp,harpoon` to include Harpoon REST
+  requests, `--forward-request-id=mcp,oauth` to include eligible queued OAuth
+  discovery requests, or `--forward-request-id=none` to disable
+  automatic forwarding.
+  The same setting is available as `FORWARD_REQUEST_ID` or top-level YAML
+  `forward_request_id`; see [request ID forwarding](docs/configuration.md#request-id-forwarding).
 - **Using a namespaced tunnel ID?** Preserve the full ID returned by the service.
   The client accepts legacy IDs and aliases with a four-character namespace;
   see [tunnel identifiers](docs/protocol.md#scope).

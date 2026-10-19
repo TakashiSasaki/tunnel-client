@@ -339,6 +339,7 @@ func TestChannelHTTPClientScopesStaticAndForwardedAuthorizationHeaders(t *testin
 	factory := newTestChannelTransportFactory(t, serverURL, &config.LoggingConfig{HTTPRawUnsafe: false}, slog.New(slog.NewTextHandler(&bytes.Buffer{}, nil)))
 	factory.config.ExtraHeaders = map[string]string{
 		"Authorization": "Bearer static-runtime",
+		"X-Request-Id":  "configured-request-id",
 		"X-Static":      "runtime",
 		"X-Discovery":   "runtime",
 	}
@@ -358,6 +359,7 @@ func TestChannelHTTPClientScopesStaticAndForwardedAuthorizationHeaders(t *testin
 
 	runtimeCtx, _, err := internal.ContextWithHeaders(context.Background(), http.Header{
 		"Authorization": {"Bearer connector-request"},
+		"X-Request-Id":  {"original-request-id"},
 		"X-Connector":   {"forwarded"},
 	})
 	if err != nil {
@@ -367,6 +369,9 @@ func TestChannelHTTPClientScopesStaticAndForwardedAuthorizationHeaders(t *testin
 	runtimeHeaders := mustReceiveHeaders(t, seen)
 	if got := runtimeHeaders.Get("Authorization"); got != "Bearer connector-request" {
 		t.Fatalf("runtime Authorization = %q, want connector request value", got)
+	}
+	if got := runtimeHeaders.Get("X-Request-Id"); got != "original-request-id" {
+		t.Fatalf("runtime X-Request-Id = %q, want original request value", got)
 	}
 	if got := runtimeHeaders.Get("X-Static"); got != "runtime" {
 		t.Fatalf("runtime X-Static = %q, want runtime", got)
@@ -383,6 +388,9 @@ func TestChannelHTTPClientScopesStaticAndForwardedAuthorizationHeaders(t *testin
 	discoveryHeaders := mustReceiveHeaders(t, seen)
 	if got := discoveryHeaders.Get("Authorization"); got != "Bearer static-runtime" {
 		t.Fatalf("discovery Authorization = %q, want static runtime value", got)
+	}
+	if got := discoveryHeaders.Get("X-Request-Id"); got != "configured-request-id" {
+		t.Fatalf("discovery X-Request-Id = %q, want configured value", got)
 	}
 	if got := discoveryHeaders.Get("X-Discovery"); got != "discovery" {
 		t.Fatalf("discovery X-Discovery = %q, want discovery", got)

@@ -27,19 +27,20 @@ type fileConfigValues struct {
 }
 
 type fileConfig struct {
-	ConfigVersion *int                   `yaml:"config_version"`
-	CABundle      *string                `yaml:"ca_bundle"`
-	HTTPProxy     *string                `yaml:"http_proxy"`
-	ControlPlane  fileControlPlaneConfig `yaml:"control_plane"`
-	Log           fileLogConfig          `yaml:"log"`
-	Tracing       fileTracingConfig      `yaml:"tracing"`
-	Health        fileHealthConfig       `yaml:"health"`
-	AdminUI       fileAdminUICompat      `yaml:"admin_ui"`
-	Process       fileProcessConfig      `yaml:"process"`
-	Cloudflared   fileCloudflaredConfig  `yaml:"cloudflared"`
-	MCP           fileMCPConfig          `yaml:"mcp"`
-	Harpoon       fileHarpoonConfig      `yaml:"harpoon"`
-	Proxy         fileProxyConfig        `yaml:"proxy"`
+	ConfigVersion    *int                   `yaml:"config_version"`
+	CABundle         *string                `yaml:"ca_bundle"`
+	HTTPProxy        *string                `yaml:"http_proxy"`
+	ForwardRequestID yaml.Node              `yaml:"forward_request_id"`
+	ControlPlane     fileControlPlaneConfig `yaml:"control_plane"`
+	Log              fileLogConfig          `yaml:"log"`
+	Tracing          fileTracingConfig      `yaml:"tracing"`
+	Health           fileHealthConfig       `yaml:"health"`
+	AdminUI          fileAdminUICompat      `yaml:"admin_ui"`
+	Process          fileProcessConfig      `yaml:"process"`
+	Cloudflared      fileCloudflaredConfig  `yaml:"cloudflared"`
+	MCP              fileMCPConfig          `yaml:"mcp"`
+	Harpoon          fileHarpoonConfig      `yaml:"harpoon"`
+	Proxy            fileProxyConfig        `yaml:"proxy"`
 }
 
 type fileControlPlaneConfig struct {
@@ -186,6 +187,9 @@ func loadFileConfigValues(fs *pflag.FlagSet, lookupEnv func(string) (string, boo
 	}
 
 	selectedCfg := cfg
+	if configValueOverridden(fs, lookupEnv, "forward-request-id", "FORWARD_REQUEST_ID") {
+		selectedCfg.ForwardRequestID = yaml.Node{}
+	}
 	// Retain YAML targets as structured values. Serializing them through the
 	// legacy HARPOON_TARGETS list could discard a template's constraints or
 	// interpret delimiters inside URL and header values as new fields.
@@ -313,6 +317,27 @@ func (c fileConfig) toEnv(lookupEnv func(string) (string, bool)) (map[string]str
 
 	setString(env, "CA_BUNDLE", c.CABundle)
 	setString(env, "TUNNEL_CLIENT_HTTP_PROXY", c.HTTPProxy)
+	if c.ForwardRequestID.Kind != 0 {
+		var names []string
+		switch c.ForwardRequestID.Kind {
+		case yaml.ScalarNode:
+			if c.ForwardRequestID.Tag != "!!str" {
+				return nil, fmt.Errorf("forward_request_id must be a comma-separated string or list of surfaces")
+			}
+			names = []string{c.ForwardRequestID.Value}
+		case yaml.SequenceNode:
+			if err := c.ForwardRequestID.Decode(&names); err != nil {
+				return nil, fmt.Errorf("forward_request_id must be a list of surface names: %w", err)
+			}
+		default:
+			return nil, fmt.Errorf("forward_request_id must be a comma-separated string or list of surfaces")
+		}
+		raw := strings.Join(names, ",")
+		if _, err := parseRequestIDForwarding(raw); err != nil {
+			return nil, err
+		}
+		env["FORWARD_REQUEST_ID"] = raw
+	}
 
 	if err := setResolvedString(env, "CONTROL_PLANE_BASE_URL", "control_plane.base_url", c.ControlPlane.BaseURL, lookupEnv); err != nil {
 		return nil, err

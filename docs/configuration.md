@@ -172,6 +172,10 @@ Example:
 
 ```yaml
 config_version: 1
+# Optional. Forward the original HTTP X-Request-Id to MCP HTTP targets (default).
+# Use [mcp, harpoon, oauth] to opt in Harpoon REST and queued OAuth discovery
+# at the configured MCP origin, or none to disable automatic forwarding.
+forward_request_id: mcp
 control_plane:
   base_url: https://api.openai.com # citadel-ignore: public endpoint example for external tunnel-client config
   # Optional path appended before tunnel-client adds its /v1/... routes.
@@ -456,6 +460,42 @@ tunnel-client profiles add corp-proxy --sample sample_mcp_enterprise_proxy --tun
     `X-Tunnel-Client-Wire-Protocol-Version`, `X-Tunnel-Client-Instance-Id`,
     and `X-Tunnel-MCP-Server-Info`) are managed by the client and cannot be
     overridden by extra headers.
+
+## Request ID forwarding
+
+`--forward-request-id` selects which outbound HTTP surfaces receive the
+original request's `X-Request-Id` automatically:
+
+- Flag: `--forward-request-id=mcp,harpoon`
+- Env: `FORWARD_REQUEST_ID=mcp,harpoon`
+- YAML: `forward_request_id: [mcp, harpoon]` (also accepts the scalar
+  `forward_request_id: mcp,harpoon`)
+- Default: `mcp`, preserving MCP Streamable HTTP request forwarding.
+
+The supported surfaces are `mcp` (MCP HTTP requests), `harpoon` (Harpoon
+`call_target` REST requests), `oauth` (queued OAuth discovery at the configured
+MCP origin), and `none` (disable automatic request ID forwarding). For example,
+`--forward-request-id=mcp,harpoon,oauth` enables all three named surfaces;
+`--forward-request-id=oauth` enables only eligible OAuth forwarding, and
+`--forward-request-id=none` disables automatic forwarding. An explicit value
+replaces the default rather than adding to it. Repeated names are deduplicated.
+Empty or unknown names, including `all`, and `none` combined with another name are
+rejected. Flags override the environment variable, which overrides YAML.
+
+Only an original inbound HTTP request ID is forwarded. The client never uses
+its queue command ID or JSON-RPC ID as a replacement, and it adds no header
+when the original ID is absent. Existing MCP header precedence and same-origin
+limits still apply. Harpoon's explicit caller or template headers retain
+ownership of `X-Request-Id`; automatic forwarding does not replace them or
+cross redirect trust boundaries. This setting does not change stdio, OAuth
+startup discovery requests, logging, or explicitly configured headers.
+
+With `oauth` selected, queued OAuth discovery may forward a present original
+inbound ID to the configured MCP server origin for its `WWW-Authenticate`
+probe, protected-resource metadata, and authorization-server metadata hosted
+there. Startup discovery has no inbound ID, and discovery at separate trusted
+origins receives none. This setting does not forward an ID for OAuth shim
+`call_target` requests. Existing same-origin redirect restrictions still apply.
 
 ## TLS trust (custom CA bundle)
 

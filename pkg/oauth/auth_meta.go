@@ -279,6 +279,7 @@ func fetchAuthServerMetadataDocument(
 	if err != nil {
 		return nil, nil, err
 	}
+	applyForwardedRequestID(req)
 	redirectOrigin, err := url.Parse(metadataURL)
 	if err != nil {
 		return nil, nil, err

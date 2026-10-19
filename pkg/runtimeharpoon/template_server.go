@@ -373,6 +373,7 @@ func (s *Server) callTargetTemplate(ctx context.Context, params callTargetTempla
 		return nil, newToolError(label, "invalid template request")
 	}
 	req.Header = headers
+	req = req.WithContext(contextWithAutoRequestID(req.Context(), req.Header, resolved))
 	req.ContentLength = int64(len(bodyText))
 	client := &http.Client{
 		Transport:     templateRoundTripper{policy: target.template, parameters: parameters, body: params.Body, contentType: params.ContentType, base: s.httpTransport},
@@ -412,6 +413,7 @@ func (t templateRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	if err := t.policy.validateRequest(req, t.parameters, t.body, t.contentType); err != nil {
 		return nil, err
 	}
+	applyAutoRequestID(req, true)
 	return t.base.RoundTrip(req)
 }
 

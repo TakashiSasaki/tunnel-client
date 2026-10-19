@@ -549,6 +549,7 @@ func (s *Server) callTarget(ctx context.Context, params callTargetRequest) (*cal
 		}
 	}
 	req.Header.Set("User-Agent", version.UserAgent)
+	req = req.WithContext(contextWithAutoRequestID(req.Context(), req.Header, resolved))
 	if droppedHeaderCount > 0 {
 		logger.InfoContext(ctx, "harpoon request dropped non-forwardable headers",
 			slog.String("label", label),
@@ -932,6 +933,7 @@ func (t targetRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
 	if err != nil {
 		return nil, err
 	}
+	applyAutoRequestID(req, false)
 	return httpTransport.RoundTrip(req)
 }
 

@@ -121,6 +121,7 @@ func runOAuthMetadataDiscoveryPass(
 		req = req.WithContext(headerscope.WithMCPDiscovery(req.Context()))
 		req.Header.Set("Accept", "application/json")
 		req.Header.Set("User-Agent", version.UserAgent)
+		applyForwardedRequestID(req)
 
 		var resp *http.Response
 		discoveryClient := withSameOriginRedirects(withTrustedDiscoveryOrigins(client, candidate.trustedOrigins), candidate.URL)
@@ -238,7 +239,16 @@ func withSameOriginRedirects(client *http.Client, origin *url.URL) *http.Client 
 			return fmt.Errorf("oauth discovery: redirect blocked: destination must use the discovery origin")
 		}
 		if priorPolicy != nil {
-			return priorPolicy(req, via)
+			if err := priorPolicy(req, via); err != nil {
+				return err
+			}
+			// A caller policy may mutate the redirect request before net/http
+			// sends it. Recheck so a copied automatic request ID cannot leave
+			// the selected discovery origin.
+			if !sameURLOrigin(req.URL, origin) {
+				return fmt.Errorf("oauth discovery: redirect blocked: destination must use the discovery origin")
+			}
+			return nil
 		}
 		if len(via) >= 10 {
 			return fmt.Errorf("oauth discovery: stopped after 10 redirects")

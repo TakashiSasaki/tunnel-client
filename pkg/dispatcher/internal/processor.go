@@ -25,15 +25,14 @@ import (
 	"github.com/openai/tunnel-client/pkg/mcpclient"
 	"github.com/openai/tunnel-client/pkg/oauth"
 	"github.com/openai/tunnel-client/pkg/runtimeconfig"
+	"github.com/openai/tunnel-client/pkg/runtimeharpoon"
 	"github.com/openai/tunnel-client/pkg/runtimeharpoon/hostbus"
 	"github.com/openai/tunnel-client/pkg/tracing"
 	"github.com/openai/tunnel-client/pkg/tunnelctx"
 	"github.com/openai/tunnel-client/pkg/types"
 )
 
-const (
-	defaultAcceptHeaderValue = "application/json, text/event-stream"
-)
+const defaultAcceptHeaderValue = "application/json, text/event-stream"
 
 var legacyRequiredProcessorChannels = []types.Channel{
 	types.DefaultChannel,
@@ -82,6 +81,7 @@ type mcpProcessor struct {
 	tunnelResponder     controlplane.Responder
 	connectionMaxTTL    time.Duration
 	forwardTraceContext bool
+	forwardRequestID    runtimeconfig.RequestIDForwarding
 	tracing             *tracing.Runtime
 	metrics             *processorMetrics
 	tunnelID            types.TunnelID
@@ -306,6 +306,7 @@ func NewProcessor(p processorParams) (Processor, error) {
 		tunnelResponder:     p.TunnelResponder,
 		connectionMaxTTL:    p.MCPConfig.ConnectionMaxTTL,
 		forwardTraceContext: forwardTraceContext,
+		forwardRequestID:    p.MCPConfig.ForwardRequestID,
 		tracing:             p.Tracing,
 		metrics:             processorMetrics,
 		tunnelID:            p.ControlPlaneCfg.TunnelID,
@@ -501,6 +502,11 @@ func (p *mcpProcessor) processJsonRpcCommand(ctx context.Context, logger *slog.L
 	requestKindAttrs := requestKindAttributes(req)
 	requestKindAttrs = append(requestKindAttrs, attribute.String("channel", channel.String()))
 	latencyRecorded := &latencyFlags{}
+	if channel == types.ChannelHarpoon && p.forwardRequestID.AllowsHarpoon() {
+		if _, ok := tunnelctx.ControlPlaneCommandRequestIDFromContext(ctx); ok {
+			ctx = runtimeharpoon.ContextWithForwardRequestID(ctx)
+		}
+	}
 
 	// Establish MCP connection only for JSON-RPC commands.
 	conn, err := channelCfg.transport.Connect(ctx)
@@ -574,6 +580,11 @@ func (p *mcpProcessor) processJsonRpcCommand(ctx context.Context, logger *slog.L
 	}
 
 	headers := ensureDefaultAcceptHeader(cmd.Headers())
+	if channel != types.ChannelHarpoon &&
+		(channelCfg.transportKind == "" || channelCfg.transportKind == runtimeconfig.MCPTransportHTTPStreamable) &&
+		!p.forwardRequestID.AllowsMCP() {
+		headers.Del("X-Request-Id")
+	}
 	if p.forwardTraceContext && (channelCfg.transportKind == runtimeconfig.MCPTransportStdio || channelCfg.transportKind == runtimeconfig.MCPTransportHTTPStreamable) {
 		if p.tracing.Enabled() {
 			req = forwardTraceContext(req, nil, commandTraceCarrier(ctx))
@@ -732,7 +743,11 @@ func (p *mcpProcessor) processSessionTerminationCommand(ctx context.Context, log
 		return fmt.Errorf("dispatcher processor: MCP transport does not support session termination")
 	}
 
-	statusCode, respHeader, err := terminator.TerminateSession(ctx, cloneHeaders(cmd.Headers()))
+	headers := cloneHeaders(cmd.Headers())
+	if !p.forwardRequestID.AllowsMCP() {
+		headers.Del("X-Request-Id")
+	}
+	statusCode, respHeader, err := terminator.TerminateSession(ctx, headers)
 	statusCode = normalizeTransportStatusCode(statusCode, err)
 	if err != nil || statusCode >= http.StatusBadRequest {
 		recordWorkFailure(ctx, err, statusCode)
@@ -767,6 +782,9 @@ func (p *mcpProcessor) processSessionTerminationCommand(ctx context.Context, log
 func (p *mcpProcessor) processOauthDiscoveryCommand(ctx context.Context, logger *slog.Logger, cmd controlplane.OauthDiscoveryCommand, channel types.Channel) error {
 	if p.mcpServerURL == nil {
 		return fmt.Errorf("dispatcher processor: missing MCP server URL")
+	}
+	if p.forwardRequestID.AllowsOAuth() {
+		ctx = oauth.ContextWithForwardRequestID(ctx, p.mcpServerURL)
 	}
 
 	candidates, _, err := oauth.BuildOAuthDiscoveryCandidates(ctx, p.oauthHTTPClient, p.mcpServerURL, logger, p.oauthOrigins...)
