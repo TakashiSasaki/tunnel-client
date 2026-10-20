@@ -563,7 +563,7 @@ therefore reports the tag semantic version through `tunnel-client --version`,
 builds made with the Make target or explicit linker flag above append the Git
 SHA to that semantic version.
 
-Supported release archives also bundle pinned `cloudflared` `2026.8.2` beside
+Supported release archives also bundle pinned `cloudflared` `2026.10.2` beside
 the CLI for Linux `amd64`/`arm64`, macOS `amd64`/`arm64`, and Windows
 `amd64`/`arm64`.
 Official release images are published at `ghcr.io/openai/tunnel-client` for
