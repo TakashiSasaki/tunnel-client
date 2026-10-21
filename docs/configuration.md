@@ -437,6 +437,13 @@ tunnel-client profiles add corp-proxy --sample sample_mcp_enterprise_proxy --tun
     parameters are serialized.
   - A Harpoon-only client may set only `harpoon` and omit the main MCP binding,
     but it must configure at least one routable Harpoon target.
+  - Unscoped polling and scopes that include `harpoon` wait for startup OAuth
+    discovery and target registration to complete. A failed startup catalog
+    prevents polling, and `/readyz` stays non-ready while registration is
+    pending or failed. Explicit scopes that exclude `harpoon` do not wait for
+    this catalog. This gate requires the standard runtime's acknowledged
+    registration bus; custom embedded graphs using a legacy publication-only
+    bus retain their existing behavior.
 - **Polled-command buffer capacity**
   - Flag: `--control-plane.max-inflight`
   - Env: `CONTROL_PLANE_MAX_INFLIGHT_REQUESTS`
@@ -646,13 +653,17 @@ routing, streaming, OAuth discovery, and common setup pitfalls, see
   - Default: `0s` (disabled)
   - When positive for an HTTP-streamable `main` MCP binding, tunnel-client
     delays its first control-plane poll and OAuth discovery until the
-    MCP listener accepts a connection. It retries only pre-connect
-    `connection refused` and missing Unix-socket errors during this window;
-    any HTTP response, including `401 Unauthorized`, proves the listener is
-    reachable.
-  - If the wait expires, polling resumes for compatibility while `/readyz`
-    remains non-ready for the startup failure. This setting does not retry or
-    replay tunneled MCP commands.
+    MCP initialization probe completes. It retries pre-connect `connection
+    refused`, missing Unix-socket errors, and HTTP `429`/`5xx` during this
+    window. Authentication-required responses such as `401 Unauthorized`
+    complete the probe without retrying.
+  - Without this optional listener wait, HTTP `429`/`5xx` initialization
+    responses retry in the background with backoff capped at 30 seconds.
+    Readiness stays pending until the probe settles; other default probe
+    failure handling is unchanged.
+  - If the configured wait expires, `/readyz` remains non-ready. Polling still
+    requires successful startup catalog completion when Harpoon is included.
+    Initialization retries never replay tunneled MCP commands.
 - **Max concurrent requests**
   - Flag: `--mcp.max-concurrent-requests`
   - Env: `MCP_MAX_CONCURRENT_REQUESTS`
@@ -835,6 +846,16 @@ client with labeled targets.
 Harpoon's channel (`harpoon`) is enabled only when at least one target is
 registered. If there are no targets, `harpoon` commands return
 `unsupported_channel`.
+
+Startup OAuth discovery retries timeouts, HTTP `429`/`5xx`, and malformed
+successful metadata responses with jittered exponential backoff capped at
+30 seconds. This includes transient failures fetching advertised authorization
+server metadata, so polling does not begin with a partial discovered target
+catalog. Discovery and target registration must complete before an unscoped
+poller, or a poller whose scope includes Harpoon, consumes commands. Optional
+OAuth discovery on plain MCP servers may complete with an empty catalog;
+this does not enable the Harpoon channel. Permanent configuration and trust
+errors are not bypassed, and readiness remains non-ready while retrying.
 
 At startup, after configured targets and startup OAuth-discovered targets have
 been processed, tunnel-client emits one INFO log named

@@ -679,9 +679,17 @@ plugin installed by `tunnel-client codex plugin install`.
   additional configured channels can target their own MCP bindings, and
   `harpoon` is routable only when Harpoon has registered targets.
 - On startup, it fetches OAuth Protected Resource Metadata from the MCP server
-  for diagnostics. Timeout-only startup failures keep readiness pending and
-  retry with bounded exponential backoff until discovery succeeds or the
-  process stops; non-timeout discovery failures still settle readiness.
+  and registers discovered Harpoon targets. Timeouts, HTTP `429`/`5xx`, and
+  malformed successful metadata responses retry with bounded exponential
+  backoff until discovery succeeds or the process stops. Permanent errors
+  remain visible through readiness; discovery validation and trusted-origin
+  restrictions still apply.
+- Before polling for Harpoon work, the runtime waits for startup discovery and
+  target registration to complete. Failed startup catalogs do not consume
+  commands, and readiness remains non-ready until registration succeeds.
+  Plain MCP servers without OAuth and explicitly scoped pollers
+  that exclude Harpoon remain supported. Transient HTTP `429`/`5xx` MCP startup
+  initialization errors also retry without replaying tunneled commands.
 - After configured and startup OAuth-discovered Harpoon targets settle, it
   emits one privacy-safe `harpoon startup catalog digest` INFO log. Compare
   replicas only when they use the same tunnel ID and control-plane runtime API
