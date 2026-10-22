@@ -10,6 +10,7 @@ fi
 client_path="$1"
 profile_file="$2"
 preflight_base_url="$3"
+curl_path="${TUNNEL_CLIENT_PREFLIGHT_CURL:-curl}"
 shift 3
 
 startup_timeout_seconds="${STARTUP_TIMEOUT_SECONDS:-120.0}"
@@ -75,7 +76,7 @@ request_ok() {
   done
 
   local status=""
-  status="$(curl "${curl_args[@]}" "$url" 2>/dev/null || true)"
+  status="$("$curl_path" "${curl_args[@]}" "$url" 2>/dev/null || true)"
   [[ "$status" == 2* ]]
 }
 
@@ -102,7 +103,7 @@ request_json() {
     shift
   done
 
-  curl "${curl_args[@]}" "$url" 2>/dev/null || true
+  "$curl_path" "${curl_args[@]}" "$url" 2>/dev/null || true
 }
 
 emit_http_snapshot() {
@@ -124,7 +125,7 @@ emit_http_snapshot() {
     curl_args+=(-H "$1")
     shift
   done
-  curl "${curl_args[@]}" "$url" >&2 || true
+  "$curl_path" "${curl_args[@]}" "$url" >&2 || true
 }
 
 emit_health_snapshot() {
