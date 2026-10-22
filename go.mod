@@ -1,6 +1,8 @@
 module github.com/openai/tunnel-client
 
-go 1.27.3
+go 1.27
+
+toolchain go1.27.3
 
 require (
 	github.com/google/go-cmp v0.7.0
@@ -22,9 +24,9 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.43.0
 	go.opentelemetry.io/otel/trace v1.43.0
 	go.uber.org/fx v1.23.0
-	golang.org/x/net v0.55.0
+	golang.org/x/net v0.60.0
 	golang.org/x/sync v0.20.0
-	golang.org/x/sys v0.45.0
+	golang.org/x/sys v0.48.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

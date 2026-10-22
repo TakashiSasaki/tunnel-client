@@ -35,18 +35,18 @@
     "SPDXRef-File-staged-f3f34f07fa1db2aa",
     "SPDXRef-File-staged-f4a38024c5849e81"
   ],
-  "documentNamespace": "https://github.com/openai/tunnel-client/sbom/baseline/a4ede14e7c48f43418e3f85b73e528bf71a9814605d9b797a2d84ddd03d720b1",
+  "documentNamespace": "https://github.com/openai/tunnel-client/sbom/baseline/c1236ebaf5b00be30ca6f3e58b154da42ee0928db998c417896eb816623e454a",
   "files": [
     {
       "SPDXID": "SPDXRef-File-...darwin-amd64-tunnel-client-runtime-4213e131154ced46",
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "bd4c9644ee3f83e893c835b6dd27a05d0bf1744d"
+          "checksumValue": "a8008b546fc3da2ceca39c13d05e9483c0b9e64d"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "249a9e168750018886cfdc4ca8f337b68fc14811c4bfa5b2560e4a35d0c173ce"
+          "checksumValue": "5996c0208c6a20a2a1861e03a1843fc972201aa462c621d455382906a6ef1d5a"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -65,11 +65,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "aad32db2119560ded2c98c414cea69710ffe3406"
+          "checksumValue": "ed59ac5e2d6237e21613e9a5b93d8ab66f4c214d"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "52508735543e586723b7f2fe986646767fecc2586a2c63745b3e2f67910be04c"
+          "checksumValue": "353f9de68b01669568e6cfe4226e3b1b64667ee4b506f06589c52514e3a5b68a"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -88,11 +88,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "480b6561a8dc3b15eeabd86bcd8556dc397a03a2"
+          "checksumValue": "51b55ea5602888b9d45013aa982bd361d880f6e9"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "ff8e64eda6e21185ebf6509d2fbc73154ac5f66a6d7e8983357fe24cafd4686d"
+          "checksumValue": "9759469f1200d6650016fc0c29f2c7123984feeb6f75babd17c4927021966753"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -111,11 +111,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "c34ef13bb397481c2dfd72b2669e46a2ba044e2c"
+          "checksumValue": "034db63b4af17696351d7c06d6ee92fe92e34f82"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "50b77543318d8d2d134e54deac3c4d3567ae27f9405a2db13978d9aaea4118ab"
+          "checksumValue": "c878962a6cb18f37fc7cd4be54884937eb342ce152a4671622cf91e75cbe6c36"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -134,11 +134,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "924a5d558471cd5d3291a88142296dd54bbb67e4"
+          "checksumValue": "659769ef86b5b4d4609e29726bccf23254c823a1"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "184d718f7a6714eba0087e119adcbb5388e44eacca1c32c82a12c1425615728b"
+          "checksumValue": "ff28bff2070a5160997169380db06889ac6128e74e1828dced29dc0879a0ae6b"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -157,11 +157,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "507a1aa219197772208ddf5c31b66fe057bf85b9"
+          "checksumValue": "bb8fcb266a1594356542045a508d3da948664ef0"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "a16bcecd7bfd58115386af4a972c73dd82ab58207a5890978dfe4a4ca065cb7e"
+          "checksumValue": "46c7f0a8d5a2fd3a6fed7b74d85bb265ab0276d1f81025af3fe8abdf44bb99f5"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -180,11 +180,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "c5977611fdd98d3db590666eb1144e0cc1630d1a"
+          "checksumValue": "967a45736ea6b4d6886c3e20758f66d96b9d2401"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "700f2bce126d969f917e1330c8d3a4f3f9d384ac40c021c75409ca4325676a78"
+          "checksumValue": "0da9320bf467d11cbba7e73cfe26ca13d5324855f769945958694d8aa09628cb"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -334,11 +334,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "6c20dd73a826056cb8e59549a8ec7be4bfeb3192"
+          "checksumValue": "262cd6e94a60fa1269b013d04d0dec9622515e90"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "65f2c97d95abfe805ce18fd63757186295e1bbf8e20ecedcb7cc173d3cade73f"
+          "checksumValue": "6781c0bac31ca8b1ca6a2edc361e0f3f40c17331b7427f679403400dee891bc3"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -400,11 +400,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "49224abfd94b38ff65e6d2e0a862ba6f84a99d5e"
+          "checksumValue": "2b2009b91ea616c797f1cfa9dc73cb3fbb2f5f7d"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "5acdab335f96235bb6f04d06e6327648a3ea7ba431d50772bca674f8e5a948e2"
+          "checksumValue": "ee86e832f872d69b10af30f8eb125c3101e0e8a5fdc1ba775f6e5c109044b393"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -444,11 +444,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "62f86b99efb53f5f3bd042b8125cd87707b43490"
+          "checksumValue": "f53dbfe05f299ececf1a0bee3746a4418a211eec"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "4c4b2a6172d433653d13d8a14ab2e143b4c6c7bdeccf0e67a3e0a0e24fe6159b"
+          "checksumValue": "bc978aab4bd7ccac496a89a7ceb493354a65eca9b74ef753b17f69346b26826a"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -532,11 +532,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "4001c793c7d59a2af48f0120e2d4124ee3452aa5"
+          "checksumValue": "ef2721cd9add8d36eac5018b6cbf89ed8f355336"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "a757b55503d44fdce8a31779680c1c1a10985716999140a068467d1308d6aa00"
+          "checksumValue": "2c6d06fef7f896189edf4a1b5ee2d48de34a0f87b7a5c85930e4f1544f45c75f"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -554,11 +554,11 @@
       "checksums": [
         {
           "algorithm": "SHA1",
-          "checksumValue": "37c2608d28dc515c4d6aaa8bc99588dcaf131e2e"
+          "checksumValue": "543810931c51d782b6b605f604d25fdaf5d2a471"
         },
         {
           "algorithm": "SHA256",
-          "checksumValue": "228754b49354a9063282612d3f663edf78f0db16bc81fb6d5e1369ee6e8c325c"
+          "checksumValue": "baa71ed1ecb3babb6f5ae4343a385e7327e0cdec81ee274ebf0cfcb8d1c87fb2"
         }
       ],
       "copyrightText": "NOASSERTION",
@@ -6781,114 +6781,18 @@
       "versionInfo": "v2.4.2"
     },
     {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-0b4f1350631f3ba5",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-0fdb0dfa4cd540ec",
       "copyrightText": "NOASSERTION",
       "downloadLocation": "NOASSERTION",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/net@v0.55.0",
+          "referenceLocator": "pkg:golang/golang.org/x/net@v0.60.0",
           "referenceType": "purl"
         },
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:networking:v0.55.0:*:*:*:*:go:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
-      "name": "golang.org/x/net",
-      "sourceInfo": "acquired package info from go module information: /payloads/windows_amd64/tunnel-client-runtime.exe",
-      "supplier": "NOASSERTION",
-      "versionInfo": "v0.55.0"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-29a9fcfad20045a3",
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/net@v0.55.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:networking:v0.55.0:*:*:*:*:go:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
-      "name": "golang.org/x/net",
-      "sourceInfo": "acquired package info from go module information: /payloads/darwin_amd64/tunnel-client-runtime",
-      "supplier": "NOASSERTION",
-      "versionInfo": "v0.55.0"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-36c92371964f53ce",
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/net@v0.55.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:networking:v0.55.0:*:*:*:*:go:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
-      "name": "golang.org/x/net",
-      "sourceInfo": "acquired package info from go module information: /payloads/linux_amd64/tunnel-client-runtime",
-      "supplier": "NOASSERTION",
-      "versionInfo": "v0.55.0"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-3fa93f59cce8495c",
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/net@v0.55.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:networking:v0.55.0:*:*:*:*:go:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
-      "name": "golang.org/x/net",
-      "sourceInfo": "acquired package info from go module information: /payloads/darwin_arm64/tunnel-client-runtime",
-      "supplier": "NOASSERTION",
-      "versionInfo": "v0.55.0"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-88aa12ae1d48cb5b",
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/net@v0.55.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:networking:v0.55.0:*:*:*:*:go:*:*",
+          "referenceLocator": "cpe:2.3:a:golang:networking:v0.60.0:*:*:*:*:go:*:*",
           "referenceType": "cpe23Type"
         }
       ],
@@ -6898,21 +6802,21 @@
       "name": "golang.org/x/net",
       "sourceInfo": "acquired package info from go module information: /payloads/windows_arm64/tunnel-client-runtime.exe",
       "supplier": "NOASSERTION",
-      "versionInfo": "v0.55.0"
+      "versionInfo": "v0.60.0"
     },
     {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-f933fbf19fbed8e9",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-15d7689e99ca4938",
       "copyrightText": "NOASSERTION",
       "downloadLocation": "NOASSERTION",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/net@v0.55.0",
+          "referenceLocator": "pkg:golang/golang.org/x/net@v0.60.0",
           "referenceType": "purl"
         },
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:networking:v0.55.0:*:*:*:*:go:*:*",
+          "referenceLocator": "cpe:2.3:a:golang:networking:v0.60.0:*:*:*:*:go:*:*",
           "referenceType": "cpe23Type"
         }
       ],
@@ -6922,7 +6826,103 @@
       "name": "golang.org/x/net",
       "sourceInfo": "acquired package info from go module information: /payloads/linux_arm64/tunnel-client-runtime",
       "supplier": "NOASSERTION",
-      "versionInfo": "v0.55.0"
+      "versionInfo": "v0.60.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-6d3fd10251d77242",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:golang/golang.org/x/net@v0.60.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:golang:networking:v0.60.0:*:*:*:*:go:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "golang.org/x/net",
+      "sourceInfo": "acquired package info from go module information: /payloads/darwin_amd64/tunnel-client-runtime",
+      "supplier": "NOASSERTION",
+      "versionInfo": "v0.60.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-702bc95d67e91c10",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:golang/golang.org/x/net@v0.60.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:golang:networking:v0.60.0:*:*:*:*:go:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "golang.org/x/net",
+      "sourceInfo": "acquired package info from go module information: /payloads/linux_amd64/tunnel-client-runtime",
+      "supplier": "NOASSERTION",
+      "versionInfo": "v0.60.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-7b178025ddd13352",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:golang/golang.org/x/net@v0.60.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:golang:networking:v0.60.0:*:*:*:*:go:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "golang.org/x/net",
+      "sourceInfo": "acquired package info from go module information: /payloads/windows_amd64/tunnel-client-runtime.exe",
+      "supplier": "NOASSERTION",
+      "versionInfo": "v0.60.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-net-fd0133889dc80e6b",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:golang/golang.org/x/net@v0.60.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:golang:networking:v0.60.0:*:*:*:*:go:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "golang.org/x/net",
+      "sourceInfo": "acquired package info from go module information: /payloads/darwin_arm64/tunnel-client-runtime",
+      "supplier": "NOASSERTION",
+      "versionInfo": "v0.60.0"
     },
     {
       "SPDXID": "SPDXRef-Package-go-module-golang.org-x-oauth2-7aa547297e8c4047",
@@ -7213,138 +7213,18 @@
       "versionInfo": "v0.20.0"
     },
     {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-19b974770ea60bf9",
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-08b08d088119341b",
       "copyrightText": "NOASSERTION",
       "downloadLocation": "NOASSERTION",
       "externalRefs": [
         {
           "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.45.0",
+          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.48.0",
           "referenceType": "purl"
         },
         {
           "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.45.0:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
-      "name": "golang.org/x/sys",
-      "sourceInfo": "acquired package info from go module information: /payloads/windows_amd64/tunnel-client-runtime.exe",
-      "supplier": "NOASSERTION",
-      "versionInfo": "v0.45.0"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-43c6ccf452d6a268",
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.45.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.45.0:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
-      "name": "golang.org/x/sys",
-      "sourceInfo": "acquired package info from go module information: /payloads/darwin_arm64/tunnel-client-runtime",
-      "supplier": "NOASSERTION",
-      "versionInfo": "v0.45.0"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-478178cbed5af506",
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.45.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.45.0:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
-      "name": "golang.org/x/sys",
-      "sourceInfo": "acquired package info from go module information: /payloads/darwin_amd64/tunnel-client-runtime",
-      "supplier": "NOASSERTION",
-      "versionInfo": "v0.45.0"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-6139e30fe51d0fab",
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.45.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.45.0:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
-      "name": "golang.org/x/sys",
-      "sourceInfo": "acquired package info from go module information: /payloads/windows_arm64/tunnel-client-runtime.exe",
-      "supplier": "NOASSERTION",
-      "versionInfo": "v0.45.0"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-799cd5381a319eaf",
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.45.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.45.0:*:*:*:*:*:*:*",
-          "referenceType": "cpe23Type"
-        }
-      ],
-      "filesAnalyzed": false,
-      "licenseConcluded": "NOASSERTION",
-      "licenseDeclared": "NOASSERTION",
-      "name": "golang.org/x/sys",
-      "sourceInfo": "acquired package info from go module information: /payloads/linux_amd64/tunnel-client-runtime",
-      "supplier": "NOASSERTION",
-      "versionInfo": "v0.45.0"
-    },
-    {
-      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-a2250845f69819f5",
-      "copyrightText": "NOASSERTION",
-      "downloadLocation": "NOASSERTION",
-      "externalRefs": [
-        {
-          "referenceCategory": "PACKAGE-MANAGER",
-          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.45.0",
-          "referenceType": "purl"
-        },
-        {
-          "referenceCategory": "SECURITY",
-          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.45.0:*:*:*:*:*:*:*",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.48.0:*:*:*:*:*:*:*",
           "referenceType": "cpe23Type"
         }
       ],
@@ -7354,7 +7234,127 @@
       "name": "golang.org/x/sys",
       "sourceInfo": "acquired package info from go module information: /payloads/linux_arm64/tunnel-client-runtime",
       "supplier": "NOASSERTION",
-      "versionInfo": "v0.45.0"
+      "versionInfo": "v0.48.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-0e8fe77f288c6785",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.48.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.48.0:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "golang.org/x/sys",
+      "sourceInfo": "acquired package info from go module information: /payloads/darwin_amd64/tunnel-client-runtime",
+      "supplier": "NOASSERTION",
+      "versionInfo": "v0.48.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-6ca1785c33dc3a15",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.48.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.48.0:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "golang.org/x/sys",
+      "sourceInfo": "acquired package info from go module information: /payloads/linux_amd64/tunnel-client-runtime",
+      "supplier": "NOASSERTION",
+      "versionInfo": "v0.48.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-898ba26cfb04dea5",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.48.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.48.0:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "golang.org/x/sys",
+      "sourceInfo": "acquired package info from go module information: /payloads/windows_amd64/tunnel-client-runtime.exe",
+      "supplier": "NOASSERTION",
+      "versionInfo": "v0.48.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-a4e65597ffb24af7",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.48.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.48.0:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "golang.org/x/sys",
+      "sourceInfo": "acquired package info from go module information: /payloads/windows_arm64/tunnel-client-runtime.exe",
+      "supplier": "NOASSERTION",
+      "versionInfo": "v0.48.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-go-module-golang.org-x-sys-fe980b103e67cf13",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:golang/golang.org/x/sys@v0.48.0",
+          "referenceType": "purl"
+        },
+        {
+          "referenceCategory": "SECURITY",
+          "referenceLocator": "cpe:2.3:a:golang:x\\/sys:v0.48.0:*:*:*:*:*:*:*",
+          "referenceType": "cpe23Type"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "NOASSERTION",
+      "name": "golang.org/x/sys",
+      "sourceInfo": "acquired package info from go module information: /payloads/darwin_arm64/tunnel-client-runtime",
+      "supplier": "NOASSERTION",
+      "versionInfo": "v0.48.0"
     },
     {
       "SPDXID": "SPDXRef-Package-go-module-golang.org-x-time-0648701c67f90c76",
@@ -8178,7 +8178,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...darwin-amd64-tunnel-client-runtime-4213e131154ced46",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-29a9fcfad20045a3"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-6d3fd10251d77242"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -8196,7 +8196,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...darwin-amd64-tunnel-client-runtime-4213e131154ced46",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-478178cbed5af506"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-0e8fe77f288c6785"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -8466,7 +8466,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...darwin-arm64-tunnel-client-runtime-c455d6d65d0a8372",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-3fa93f59cce8495c"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-fd0133889dc80e6b"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -8484,7 +8484,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...darwin-arm64-tunnel-client-runtime-c455d6d65d0a8372",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-43c6ccf452d6a268"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-fe980b103e67cf13"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -8760,7 +8760,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...linux-amd64-tunnel-client-runtime-ac7121ede8911b78",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-36c92371964f53ce"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-702bc95d67e91c10"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -8778,7 +8778,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...linux-amd64-tunnel-client-runtime-ac7121ede8911b78",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-799cd5381a319eaf"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-6ca1785c33dc3a15"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -9054,7 +9054,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...linux-arm64-tunnel-client-runtime-15eecbf549f47ba6",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-f933fbf19fbed8e9"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-15d7689e99ca4938"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -9072,7 +9072,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...linux-arm64-tunnel-client-runtime-15eecbf549f47ba6",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-a2250845f69819f5"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-08b08d088119341b"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -9354,7 +9354,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...tunnel-client-runtime.exe-a245092d53a3b57c",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-88aa12ae1d48cb5b"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-0fdb0dfa4cd540ec"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -9372,7 +9372,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...tunnel-client-runtime.exe-a245092d53a3b57c",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-6139e30fe51d0fab"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-a4e65597ffb24af7"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -9654,7 +9654,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...tunnel-client-runtime.exe-b507f9a58e87f2ea",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-0b4f1350631f3ba5"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-7b178025ddd13352"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -9672,7 +9672,7 @@
       "comment": "evident-by: indicates the package's existence is evident by the given file",
       "relatedSpdxElement": "SPDXRef-File-...tunnel-client-runtime.exe-b507f9a58e87f2ea",
       "relationshipType": "OTHER",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-19b974770ea60bf9"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-898ba26cfb04dea5"
     },
     {
       "comment": "evident-by: indicates the package's existence is evident by the given file",
@@ -10496,7 +10496,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-5b00079fe373f84b",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-f933fbf19fbed8e9"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-15d7689e99ca4938"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-5b00079fe373f84b",
@@ -10511,7 +10511,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-5b00079fe373f84b",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-a2250845f69819f5"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-08b08d088119341b"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-5b00079fe373f84b",
@@ -10736,7 +10736,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-668100cc77c2a1b8",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-3fa93f59cce8495c"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-fd0133889dc80e6b"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-668100cc77c2a1b8",
@@ -10751,7 +10751,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-668100cc77c2a1b8",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-43c6ccf452d6a268"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-fe980b103e67cf13"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-668100cc77c2a1b8",
@@ -10981,7 +10981,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-a6a5bc2419b52162",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-0b4f1350631f3ba5"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-7b178025ddd13352"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-a6a5bc2419b52162",
@@ -10996,7 +10996,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-a6a5bc2419b52162",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-19b974770ea60bf9"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-898ba26cfb04dea5"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-a6a5bc2419b52162",
@@ -11226,7 +11226,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-b523c62d1403d369",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-36c92371964f53ce"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-702bc95d67e91c10"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-b523c62d1403d369",
@@ -11241,7 +11241,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-b523c62d1403d369",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-799cd5381a319eaf"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-6ca1785c33dc3a15"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-b523c62d1403d369",
@@ -11466,7 +11466,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-f383cc05ae5d5ed9",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-29a9fcfad20045a3"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-6d3fd10251d77242"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-f383cc05ae5d5ed9",
@@ -11481,7 +11481,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-f383cc05ae5d5ed9",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-478178cbed5af506"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-0e8fe77f288c6785"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-f383cc05ae5d5ed9",
@@ -11711,7 +11711,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-f972c6d4a29bbcef",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-88aa12ae1d48cb5b"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-net-0fdb0dfa4cd540ec"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-f972c6d4a29bbcef",
@@ -11726,7 +11726,7 @@
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-f972c6d4a29bbcef",
       "relationshipType": "DEPENDENCY_OF",
-      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-6139e30fe51d0fab"
+      "spdxElementId": "SPDXRef-Package-go-module-golang.org-x-sys-a4e65597ffb24af7"
     },
     {
       "relatedSpdxElement": "SPDXRef-Package-go-module-github.com-openai-tunnel-client-f972c6d4a29bbcef",
@@ -12479,32 +12479,32 @@
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-0b4f1350631f3ba5",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-0fdb0dfa4cd540ec",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-29a9fcfad20045a3",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-15d7689e99ca4938",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-36c92371964f53ce",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-6d3fd10251d77242",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-3fa93f59cce8495c",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-702bc95d67e91c10",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-88aa12ae1d48cb5b",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-7b178025ddd13352",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-f933fbf19fbed8e9",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-net-fd0133889dc80e6b",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
@@ -12569,32 +12569,32 @@
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-19b974770ea60bf9",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-08b08d088119341b",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-43c6ccf452d6a268",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-0e8fe77f288c6785",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-478178cbed5af506",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-6ca1785c33dc3a15",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-6139e30fe51d0fab",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-898ba26cfb04dea5",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-799cd5381a319eaf",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-a4e65597ffb24af7",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
     {
-      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-a2250845f69819f5",
+      "relatedSpdxElement": "SPDXRef-Package-go-module-golang.org-x-sys-fe980b103e67cf13",
       "relationshipType": "CONTAINS",
       "spdxElementId": "SPDXRef-DocumentRoot-Directory-tunnel-client-runtime-baseline"
     },
