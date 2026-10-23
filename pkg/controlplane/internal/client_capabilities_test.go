@@ -3,6 +3,8 @@ package internal
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -83,23 +85,106 @@ func TestPostResponseRetriesWithinOneUploadSpan(t *testing.T) {
 		require.NotContains(t, string(data), forbidden)
 	}
 	records := make(map[string]tracing.Record)
+	var attemptRecords []tracing.Record
 	count := 0
 	for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
 		var fields map[string]json.RawMessage
 		require.NoError(t, json.Unmarshal([]byte(line), &fields))
-		require.Len(t, fields, 7)
 		var record tracing.Record
 		require.NoError(t, json.Unmarshal([]byte(line), &record))
-		records[record.Name] = record
+		if record.Name == tracing.UploadAttempt {
+			require.Len(t, fields, 11)
+			attemptRecords = append(attemptRecords, record)
+		} else {
+			require.Len(t, fields, 7)
+			records[record.Name] = record
+		}
 		count++
 	}
-	require.Equal(t, 2, count)
+	require.Equal(t, 4, count)
 	require.Len(t, records, 2)
+	require.Len(t, attemptRecords, 2)
 	require.Equal(t, "00f067aa0ba902b7", records[tracing.Dispatch].ParentSpanID)
 	require.Equal(t, dispatch.SpanContext().SpanID().String(), records[tracing.Upload].ParentSpanID)
 	require.Equal(t, upload.SpanContext().SpanID().String(), records[tracing.Upload].SpanID)
+	for index, record := range attemptRecords {
+		require.Equal(t, int64(index+1), record.Attempt)
+		require.Equal(t, upload.SpanContext().SpanID().String(), record.ParentSpanID)
+		require.Equal(t, upload.SpanContext().TraceID().String(), record.TraceID)
+		require.NotNil(t, record.ElapsedMS)
+		require.GreaterOrEqual(t, *record.ElapsedMS, 0.0)
+		require.False(t, record.EndTime.Before(record.StartTime))
+	}
+	require.Equal(t, int64(http.StatusServiceUnavailable), attemptRecords[0].HTTPStatus)
+	require.Equal(t, "http_error", attemptRecords[0].Outcome)
+	require.Equal(t, "Error", attemptRecords[0].Status)
+	require.Equal(t, int64(http.StatusOK), attemptRecords[1].HTTPStatus)
+	require.Equal(t, "accepted", attemptRecords[1].Outcome)
+	require.Equal(t, "Unset", attemptRecords[1].Status)
 	for _, record := range records {
 		require.Equal(t, dispatch.SpanContext().TraceID().String(), record.TraceID)
+	}
+}
+
+func TestPostResponseAttemptTraceClassifiesTransportFailureAndNotFound(t *testing.T) {
+	t.Parallel()
+	for _, test := range []struct {
+		name         string
+		firstFailure bool
+		wantOutcome  []string
+		wantStatus   []int64
+	}{
+		{name: "network retry", firstFailure: true, wantOutcome: []string{"network_error", "accepted"}, wantStatus: []int64{0, http.StatusOK}},
+		{name: "not found", wantOutcome: []string{"already_fulfilled_or_unknown"}, wantStatus: []int64{http.StatusNotFound}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			path := filepath.Join(t.TempDir(), "trace.jsonl")
+			runtime, err := tracing.New(runtimeconfig.TracingConfig{Enabled: true, File: path})
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, runtime.Shutdown(context.Background())) })
+			ctx, dispatch := runtime.StartCommand(t.Context(), "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01")
+			ctx, upload := runtime.Start(ctx, tracing.Upload)
+			ctx = responseContext(ctx, "private-shard", "private-caller")
+			client := newResponseRetryTestClient(t)
+			client.newResponseBackoff = deterministicResponseBackoff
+			client.retrySleep = func(context.Context, time.Duration) bool { return true }
+			calls := 0
+			client.client.Transport = roundTripFunc(func(request *http.Request) (*http.Response, error) {
+				calls++
+				if test.firstFailure && calls == 1 {
+					return nil, &net.OpError{Op: "dial", Net: "tcp", Err: errors.New("private transport failure")}
+				}
+				status := http.StatusNotFound
+				if test.firstFailure {
+					status = http.StatusOK
+				}
+				return testHTTPResponse(request, status, nil), nil
+			})
+			_, err = client.PostResponse(ctx, types.RequestID("private-response"), testResponse())
+			require.NoError(t, err)
+			upload.End()
+			dispatch.End()
+			require.NoError(t, runtime.Shutdown(context.Background()))
+			require.Equal(t, len(test.wantOutcome), calls)
+			data, err := os.ReadFile(path)
+			require.NoError(t, err)
+			require.NotContains(t, string(data), "private")
+			var attemptRecords []tracing.Record
+			for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
+				var record tracing.Record
+				require.NoError(t, json.Unmarshal([]byte(line), &record))
+				if record.Name == tracing.UploadAttempt {
+					attemptRecords = append(attemptRecords, record)
+				}
+			}
+			require.Len(t, attemptRecords, len(test.wantOutcome))
+			for index, record := range attemptRecords {
+				require.Equal(t, int64(index+1), record.Attempt)
+				require.Equal(t, test.wantOutcome[index], record.Outcome)
+				require.Equal(t, test.wantStatus[index], record.HTTPStatus)
+			}
+		})
 	}
 }
 

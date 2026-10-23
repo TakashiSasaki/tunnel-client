@@ -9,7 +9,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/baggage"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
@@ -22,10 +24,18 @@ const (
 	Dispatch        = "tunnel.client.dispatch"
 	MCP             = "tunnel.client.mcp"
 	Upload          = "tunnel.client.upload"
+	UploadAttempt   = "tunnel.client.upload_attempt"
 	queueCapacity   = 1024
 	fileLimit       = 64 * 1024 * 1024
 	shutdownTimeout = time.Second
 )
+
+type uploadTraceKey struct{}
+
+type uploadTrace struct {
+	runtime *Runtime
+	spanID  trace.SpanID
+}
 
 type Runtime struct {
 	provider  *sdktrace.TracerProvider
@@ -70,7 +80,11 @@ func newRuntime(cfg runtimeconfig.TracingConfig) (*Runtime, error) {
 	runtime.provider = sdktrace.NewTracerProvider(
 		sdktrace.WithSampler(sdktrace.ParentBased(sdktrace.NeverSample())),
 		sdktrace.WithSpanProcessor(runtime.processor),
-		sdktrace.WithRawSpanLimits(sdktrace.SpanLimits{}),
+		// Only the three fixed upload-attempt fields are read by the exporter.
+		// Events, links, and arbitrary attributes are never written to disk.
+		sdktrace.WithRawSpanLimits(sdktrace.SpanLimits{
+			AttributeCountLimit: 3, AttributeValueLengthLimit: 32,
+		}),
 	)
 	runtime.tracer = runtime.provider.Tracer("tunnel-client")
 	return runtime, nil
@@ -130,7 +144,50 @@ func (runtime *Runtime) Start(ctx context.Context, name string) (context.Context
 		ctx = trace.ContextWithSpanContext(ctx, trace.SpanContext{})
 		return ctx, trace.SpanFromContext(ctx)
 	}
-	return runtime.tracer.Start(ctx, name)
+	ctx, span := runtime.tracer.Start(ctx, name)
+	if name == Upload && span.IsRecording() {
+		ctx = context.WithValue(ctx, uploadTraceKey{}, uploadTrace{runtime: runtime, spanID: span.SpanContext().SpanID()})
+	}
+	return ctx, span
+}
+
+// StartUploadAttempt times only the HTTP request, excluding any subsequent retry
+// wait. It returns nil when local upload tracing is inactive. The callback
+// accepts fixed, bounded outcome categories; it never records response bodies,
+// headers, URLs, or error strings.
+func StartUploadAttempt(ctx context.Context, attempt int) func(int, string) {
+	state, ok := ctx.Value(uploadTraceKey{}).(uploadTrace)
+	if !ok || attempt < 1 {
+		return nil
+	}
+	parent := trace.SpanFromContext(ctx)
+	if !parent.IsRecording() || parent.SpanContext().SpanID() != state.spanID {
+		return nil
+	}
+	_, span := state.runtime.tracer.Start(ctx, UploadAttempt,
+		trace.WithAttributes(attribute.Int("attempt", attempt)))
+	return func(httpStatus int, outcome string) {
+		if httpStatus >= 100 && httpStatus <= 599 {
+			span.SetAttributes(attribute.Int("http_status", httpStatus))
+		}
+		if !allowedUploadOutcome(outcome) {
+			outcome = "request_error"
+		}
+		span.SetAttributes(attribute.String("outcome", outcome))
+		if outcome != "accepted" && outcome != "already_fulfilled_or_unknown" {
+			span.SetStatus(codes.Error, "")
+		}
+		span.End()
+	}
+}
+
+func allowedUploadOutcome(outcome string) bool {
+	switch outcome {
+	case "accepted", "already_fulfilled_or_unknown", "http_error", "timeout", "canceled", "network_error", "request_error":
+		return true
+	default:
+		return false
+	}
 }
 
 func (runtime *Runtime) Shutdown(ctx context.Context) error {
@@ -157,5 +214,5 @@ func (runtime *Runtime) Stats() Stats {
 }
 
 func allowedName(name string) bool {
-	return name == Dispatch || name == MCP || name == Upload
+	return name == Dispatch || name == MCP || name == Upload || name == UploadAttempt
 }

@@ -32,6 +32,7 @@ import (
 	tcmetrics "github.com/openai/tunnel-client/pkg/metrics"
 	"github.com/openai/tunnel-client/pkg/runtimeconfig"
 	"github.com/openai/tunnel-client/pkg/tlsconfig"
+	"github.com/openai/tunnel-client/pkg/tracing"
 	tctransport "github.com/openai/tunnel-client/pkg/transport"
 	"github.com/openai/tunnel-client/pkg/tunnelctx"
 	"github.com/openai/tunnel-client/pkg/types"
@@ -697,9 +698,13 @@ func (c *TunnelServiceClient) PostResponse(ctx context.Context, requestID types.
 		}
 
 		c.deliveryHealth.Attempt(attempt > 1)
+		finishAttemptTrace := tracing.StartUploadAttempt(ctx, attempt)
 		resp, err := c.client.Do(attemptReq)
 		if err != nil {
 			category, status := healthFailure(err)
+			if finishAttemptTrace != nil {
+				finishAttemptTrace(0, category)
+			}
 			healthStatus = status
 			c.deliveryHealth.AttemptFailed(c.nowTime(), category, status)
 			// A notification remains non-final after tunnel-service accepts it. Once
@@ -712,6 +717,16 @@ func (c *TunnelServiceClient) PostResponse(ctx context.Context, requestID types.
 				return tunnelServiceRequestID, retryWaitError(ctx)
 			}
 			continue
+		}
+		if finishAttemptTrace != nil {
+			outcome := "http_error"
+			switch resp.StatusCode {
+			case http.StatusOK:
+				outcome = "accepted"
+			case http.StatusNotFound:
+				outcome = "already_fulfilled_or_unknown"
+			}
+			finishAttemptTrace(resp.StatusCode, outcome)
 		}
 
 		if id, ok := types.NewTunnelServiceRequestIDFromHeader(resp.Header); ok {

@@ -125,6 +125,46 @@ func TestRuntimeRejectsCarriersAndRespectsSampling(t *testing.T) {
 	}
 }
 
+func TestUploadAttemptRequiresLocalUploadAndBoundsExportedFields(t *testing.T) {
+	t.Parallel()
+	path := filepath.Join(t.TempDir(), "trace.jsonl")
+	runtime, err := New(runtimeconfig.TracingConfig{Enabled: true, File: path})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, dispatch := runtime.StartCommand(context.Background(), sampledParent)
+	if StartUploadAttempt(ctx, 1) != nil {
+		t.Fatal("command span started an upload attempt")
+	}
+	uploadCtx, upload := runtime.Start(ctx, Upload)
+	finish := StartUploadAttempt(uploadCtx, 1)
+	if finish == nil {
+		t.Fatal("missing upload attempt callback")
+	}
+	finish(999, "private-error")
+	upload.End()
+	dispatch.End()
+	if err := runtime.Shutdown(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	records, raw := readRecords(t, path)
+	if len(records) != 3 {
+		t.Fatalf("unexpected record count: %d", len(records))
+	}
+	if strings.Contains(raw, "private") {
+		t.Fatal("unbounded outcome leaked into trace")
+	}
+	for _, record := range records {
+		if record.Name == UploadAttempt {
+			if record.Attempt != 1 || record.HTTPStatus != 0 || record.Outcome != "request_error" || record.Status != "Error" {
+				t.Fatalf("unexpected attempt record: %+v", record)
+			}
+			return
+		}
+	}
+	t.Fatal("missing upload attempt")
+}
+
 func TestRuntimeDisabledAndExclusiveOutput(t *testing.T) {
 	t.Parallel()
 	path := filepath.Join(t.TempDir(), "trace.jsonl")

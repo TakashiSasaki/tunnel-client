@@ -697,8 +697,9 @@ does not see the MCP metadata. Missing or malformed context leaves the original
 operation unchanged. Trace identifiers are never metric labels.
 
 With [local tracing](configuration.md#local-tracing) enabled, the client creates
-dispatch, MCP, and response-upload spans from the command's validated v00
-`traceparent`. The poll request's parent is never substituted. No local spans
+dispatch, MCP, response-upload, and per-response-POST-attempt spans from the
+command's validated v00 `traceparent`. The poll request's parent is never
+substituted. No local spans
 are recorded for absent, invalid, oversized, or unsampled carriers. Incoming
 `tracestate` and baggage are discarded by local tracing. When metadata forwarding
 is also enabled, the MCP span context is added only to absent metadata trace

@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
@@ -20,6 +21,10 @@ type Record struct {
 	StartTime    time.Time `json:"start_time"`
 	EndTime      time.Time `json:"end_time"`
 	Status       string    `json:"status"`
+	Attempt      int64     `json:"attempt,omitempty"`
+	HTTPStatus   int64     `json:"http_status,omitempty"`
+	Outcome      string    `json:"outcome,omitempty"`
+	ElapsedMS    *float64  `json:"elapsed_ms,omitempty"`
 }
 
 type exportItem struct {
@@ -104,11 +109,36 @@ func (processor *fileProcessor) OnEnd(span sdktrace.ReadOnlySpan) {
 		return
 	}
 	parentID := span.Parent().SpanID()
-	item := exportItem{record: Record{
+	record := Record{
 		Name: span.Name(), TraceID: span.SpanContext().TraceID().String(),
 		SpanID: span.SpanContext().SpanID().String(), ParentSpanID: parentID.String(),
 		StartTime: span.StartTime().UTC(), EndTime: span.EndTime().UTC(), Status: span.Status().Code.String(),
-	}}
+	}
+	if span.Name() == UploadAttempt {
+		for _, field := range span.Attributes() {
+			switch string(field.Key) {
+			case "attempt":
+				if field.Value.Type() == attribute.INT64 && field.Value.AsInt64() > 0 {
+					record.Attempt = field.Value.AsInt64()
+				}
+			case "http_status":
+				if field.Value.Type() == attribute.INT64 && field.Value.AsInt64() >= 100 && field.Value.AsInt64() <= 599 {
+					record.HTTPStatus = field.Value.AsInt64()
+				}
+			case "outcome":
+				if field.Value.Type() == attribute.STRING && allowedUploadOutcome(field.Value.AsString()) {
+					record.Outcome = field.Value.AsString()
+				}
+			}
+		}
+		if record.Attempt == 0 || record.Outcome == "" {
+			processor.dropped.Add(1)
+			return
+		}
+		elapsedMS := span.EndTime().Sub(span.StartTime()).Seconds() * 1000
+		record.ElapsedMS = &elapsedMS
+	}
+	item := exportItem{record: record}
 	processor.mu.RLock()
 	defer processor.mu.RUnlock()
 	if processor.closed || !processor.started {
