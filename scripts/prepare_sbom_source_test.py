@@ -46,6 +46,10 @@ class PrepareSbomSourceTest(unittest.TestCase):
                 f'import "{LEGACY}/pkg/version"\n',
                 encoding="utf-8",
             )
+            version_dir = source_root / "pkg" / "version"
+            version_dir.mkdir(parents=True)
+            staged_version = version_dir / "VERSION"
+            staged_version.write_text("0.0.18-dev\n", encoding="utf-8")
 
             result = self.run_script(
                 root,
@@ -65,6 +69,46 @@ class PrepareSbomSourceTest(unittest.TestCase):
             )
             self.assertIn(CANONICAL, source_file.read_text(encoding="utf-8"))
             self.assertNotIn(LEGACY, source_file.read_text(encoding="utf-8"))
+            self.assertEqual(staged_version.read_bytes(), b"0.0.0-baseline\n")
+
+            staged_version.write_text("0.0.18\n", encoding="utf-8")
+            result = self.run_script(
+                root,
+                "canonicalize",
+                "--source-root",
+                str(source_root),
+                "--legacy-module-path",
+                LEGACY,
+                "--canonical-module-path",
+                CANONICAL,
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(staged_version.read_bytes(), b"0.0.0-baseline\n")
+
+    def test_rejects_staged_version_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = pathlib.Path(temporary_directory)
+            source_root = root / "source"
+            version_dir = source_root / "pkg" / "version"
+            version_dir.mkdir(parents=True)
+            outside_version = root / "outside-version"
+            outside_version.write_text("0.0.18-dev\n", encoding="utf-8")
+            (version_dir / "VERSION").symlink_to(outside_version)
+
+            result = self.run_script(
+                root,
+                "canonicalize",
+                "--source-root",
+                str(source_root),
+                "--legacy-module-path",
+                LEGACY,
+                "--canonical-module-path",
+                CANONICAL,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("must not use symlinks", result.stderr)
+            self.assertEqual(outside_version.read_text(encoding="utf-8"), "0.0.18-dev\n")
 
     def test_prints_cloudflared_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
