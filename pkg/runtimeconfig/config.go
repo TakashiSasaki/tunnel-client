@@ -516,16 +516,18 @@ type HarpoonTarget struct {
 
 // HarpoonTargetTemplate defines an opt-in operation with an operator-fixed
 // destination and bounded caller-supplied identifiers. Version 1 permits GET,
-// POST, and PUT over HTTPS and never follows redirects. Writes require a body policy.
+// POST, and PUT over HTTPS, or loopback HTTP with an explicit opt-in, and never
+// follows redirects. Writes require a body policy.
 type HarpoonTargetTemplate struct {
-	Version      int                                 `yaml:"version" json:"version"`
-	Origin       string                              `yaml:"origin" json:"origin"`
-	Method       string                              `yaml:"method" json:"method"`
-	BodyPolicy   *HarpoonTemplateBodyPolicy          `yaml:"body_policy,omitempty" json:"body_policy,omitempty"`
-	PathTemplate string                              `yaml:"path_template" json:"path_template"`
-	Query        map[string]string                   `yaml:"query" json:"query,omitempty"`
-	Parameters   map[string]HarpoonTemplateParameter `yaml:"parameters" json:"parameters"`
-	Headers      map[string]string                   `yaml:"headers" json:"headers,omitempty"`
+	Version           int                                 `yaml:"version" json:"version"`
+	Origin            string                              `yaml:"origin" json:"origin"`
+	AllowLoopbackHTTP bool                                `yaml:"allow_loopback_http,omitempty" json:"allow_loopback_http,omitempty"`
+	Method            string                              `yaml:"method" json:"method"`
+	BodyPolicy        *HarpoonTemplateBodyPolicy          `yaml:"body_policy,omitempty" json:"body_policy,omitempty"`
+	PathTemplate      string                              `yaml:"path_template" json:"path_template"`
+	Query             map[string]string                   `yaml:"query" json:"query,omitempty"`
+	Parameters        map[string]HarpoonTemplateParameter `yaml:"parameters" json:"parameters"`
+	Headers           map[string]string                   `yaml:"headers" json:"headers,omitempty"`
 	// AllowedHeaders preserves the original Go API for name-only entries.
 	// HeaderRules supports both name-only and structured entries; decoding and
 	// encoding retain the operator's header_rules or allowed_headers spelling.

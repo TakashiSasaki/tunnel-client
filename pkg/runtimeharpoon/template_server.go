@@ -146,7 +146,7 @@ func templateInvocationForLabel(target Target, invocationLabel string, base *jso
 		InputSchema: map[string]any{
 			"$schema": base.Version, "type": "object", "properties": properties,
 			"required": required, "additionalProperties": false,
-			"description": "Arguments for this fixed-origin HTTPS " + target.template.method + " operation. Supply raw parameter values without URL encoding; the client renders them. The method, path structure, and query names are fixed. Redirects are disabled. GET rejects bodies; writes enforce the advertised body policy and are never automatically replayed.",
+			"description": "Arguments for this fixed-origin " + strings.ToUpper(target.template.origin.Scheme) + " " + target.template.method + " operation. Supply raw parameter values without URL encoding; the client renders them. The method, path structure, and query names are fixed. Redirects are disabled. GET rejects bodies; writes enforce the advertised body policy and are never automatically replayed.",
 		},
 	}
 	if bodyPolicy != nil {
@@ -375,8 +375,12 @@ func (s *Server) callTargetTemplate(ctx context.Context, params callTargetTempla
 	req.Header = headers
 	req = req.WithContext(contextWithAutoRequestID(req.Context(), req.Header, resolved))
 	req.ContentLength = int64(len(bodyText))
+	baseTransport := s.httpTransport
+	if target.IsLoopbackHTTPTemplate() {
+		baseTransport = s.loopbackTemplateTransport
+	}
 	client := &http.Client{
-		Transport:     templateRoundTripper{policy: target.template, parameters: parameters, body: params.Body, contentType: params.ContentType, base: s.httpTransport},
+		Transport:     templateRoundTripper{policy: target.template, parameters: parameters, body: params.Body, contentType: params.ContentType, base: baseTransport},
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}
 	outcome = metricOutcomeRequestError
