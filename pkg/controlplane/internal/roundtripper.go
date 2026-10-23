@@ -73,7 +73,7 @@ func (r *responseReceiptRoundTripper) RoundTrip(req *http.Request) (*http.Respon
 
 type controlPlaneRoundTripper struct {
 	base                http.RoundTripper
-	apiKey              string
+	bearerToken         func(context.Context) (string, error)
 	userAgent           string
 	organizationID      string
 	mcpServerInfo       func() (string, error)
@@ -82,7 +82,7 @@ type controlPlaneRoundTripper struct {
 	traceContextEnabled bool
 }
 
-func newControlPlaneRoundTripper(base http.RoundTripper, apiKey, userAgent, organizationID string, mcpServerInfo func() (string, error), extraHeaders map[string]string, logger *slog.Logger, tracingEnabled ...bool) http.RoundTripper {
+func newControlPlaneRoundTripper(base http.RoundTripper, bearerToken func(context.Context) (string, error), userAgent, organizationID string, mcpServerInfo func() (string, error), extraHeaders map[string]string, logger *slog.Logger, tracingEnabled ...bool) http.RoundTripper {
 	if base == nil {
 		base = tctransport.CloneDefault()
 	}
@@ -91,7 +91,7 @@ func newControlPlaneRoundTripper(base http.RoundTripper, apiKey, userAgent, orga
 	}
 	return &controlPlaneRoundTripper{
 		base:                base,
-		apiKey:              apiKey,
+		bearerToken:         bearerToken,
 		userAgent:           userAgent,
 		organizationID:      organizationID,
 		mcpServerInfo:       mcpServerInfo,
@@ -102,7 +102,11 @@ func newControlPlaneRoundTripper(base http.RoundTripper, apiKey, userAgent, orga
 }
 
 func (c *controlPlaneRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
+	token, err := c.bearerToken(req.Context())
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("User-Agent", c.userAgent)
 	req.Header.Set(headerTunnelClientName, version.ClientName)

@@ -49,6 +49,8 @@ type fileControlPlaneConfig struct {
 	TunnelID              *string           `yaml:"tunnel_id"`
 	OrganizationID        *string           `yaml:"organization_id"`
 	APIKey                *string           `yaml:"api_key"`
+	AWSIdentityProviderID *string           `yaml:"aws_identity_provider_id"`
+	AWSServiceAccountID   *string           `yaml:"aws_service_account_id"`
 	ClientCert            *string           `yaml:"client_cert"`
 	ClientKey             *string           `yaml:"client_key"`
 	HTTPProxy             *string           `yaml:"http_proxy"`
@@ -346,6 +348,8 @@ func (c fileConfig) toEnv(lookupEnv func(string) (string, bool)) (map[string]str
 		return nil, err
 	}
 	setString(env, "CONTROL_PLANE_TUNNEL_ID", c.ControlPlane.TunnelID)
+	setString(env, "CONTROL_PLANE_AWS_IDENTITY_PROVIDER_ID", c.ControlPlane.AWSIdentityProviderID)
+	setString(env, "CONTROL_PLANE_AWS_SERVICE_ACCOUNT_ID", c.ControlPlane.AWSServiceAccountID)
 	setString(env, "CONTROL_PLANE_ORGANIZATION_ID", c.ControlPlane.OrganizationID)
 	setString(env, "CONTROL_PLANE_CLIENT_CERT", c.ControlPlane.ClientCert)
 	setString(env, "CONTROL_PLANE_CLIENT_KEY", c.ControlPlane.ClientKey)

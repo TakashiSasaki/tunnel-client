@@ -218,6 +218,8 @@ Which value comes from where:
   `tunnel-client admin tunnels create|list|get ...` with `OPENAI_ADMIN_KEY`.
 - `CONTROL_PLANE_API_KEY`: create it in Runtime API keys; this is the key used
   by `tunnel-client doctor` and `tunnel-client run`.
+- For [AWS workload identity](docs/configuration.md#aws-workload-identity), set
+  `CONTROL_PLANE_AWS_IDENTITY_PROVIDER_ID` and `CONTROL_PLANE_AWS_SERVICE_ACCOUNT_ID`.
 - `OPENAI_ADMIN_KEY`: only for `tunnel-client admin tunnels
   list|create|update|delete`. Do not use the admin key for the long-lived
   daemon.

@@ -272,6 +272,26 @@ under `actual_config.contents` when present, and the effective startup config.
 API keys, bearer tokens, cookies, shard tokens, URL credentials, and URL query
 secrets are redacted before export.
 
+## AWS workload identity
+
+The tunnel client can use an AWS role to authenticate to the production control plane.
+Register the AWS issuer with OpenAI and map the role to a project service account
+with tunnel read and use access. Set both IDs on the client:
+
+```sh
+CONTROL_PLANE_AWS_IDENTITY_PROVIDER_ID=<provider-id>
+CONTROL_PLANE_AWS_SERVICE_ACCOUNT_ID=<service-account-id>
+```
+
+Leave static API key settings unset. The AWS SDK uses the configured region and
+credential chain, including ECS task credentials. The role needs
+`sts:GetWebIdentityToken` for audience `https://api.openai.com/v1` and a
+300-second assertion. The client exchanges that assertion at
+`https://auth.openai.com/oauth/token`. It keeps the access token in memory
+and refreshes it before expiry while serving `https://api.openai.com`.
+The same configuration is available under `control_plane.aws_identity_provider_id`
+and `control_plane.aws_service_account_id` in YAML.
+
 ## Commands
 
 - `init`: create a validated first-use profile and print the exact next commands.

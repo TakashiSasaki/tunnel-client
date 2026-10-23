@@ -1,6 +1,7 @@
 package runtimeconfig
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -166,8 +167,10 @@ var (
 	errMissingControlPlaneAPIKey   = errors.New("control plane API key is required; set --control-plane.api-key (env:/file:) or CONTROL_PLANE_API_KEY or OPENAI_API_KEY")
 	errMalformedControlPlaneAPIKey = errors.New("control plane API key is malformed")
 	controlPlaneAPIKeyPattern      = regexp.MustCompile("^[0-9A-Za-z_-]+$")
-	tunnelIDPattern                = regexp.MustCompile(`^tunnel_([a-z0-9]{4}_)?[a-z0-9]{32}$`)
-	logFormatToString              = map[LogFormat]string{
+	// RFC 6750 section 2.1 permits dots in bearer tokens, including signed JWTs.
+	bearerTokenPattern = regexp.MustCompile(`^[A-Za-z0-9._~+/-]+=*$`)
+	tunnelIDPattern    = regexp.MustCompile(`^tunnel_([a-z0-9]{4}_)?[a-z0-9]{32}$`)
+	logFormatToString  = map[LogFormat]string{
 		LogFormatStructText: "struct-text",
 		LogFormatJSON:       "json",
 	}
@@ -187,6 +190,21 @@ func ValidateControlPlaneAPIKey(key string) error {
 		return errMalformedControlPlaneAPIKey
 	}
 	return nil
+}
+
+// BearerToken returns the credential for the next control-plane request.
+func (c *ControlPlaneConfig) BearerToken(ctx context.Context) (string, error) {
+	if c.TokenProvider == nil {
+		return c.APIKey, ValidateControlPlaneAPIKey(c.APIKey)
+	}
+	token, err := c.TokenProvider(ctx)
+	if err != nil {
+		return "", err
+	}
+	if !bearerTokenPattern.MatchString(token) {
+		return "", errors.New("workload identity returned a malformed bearer token")
+	}
+	return token, nil
 }
 
 type flagAlias struct {
@@ -271,6 +289,7 @@ type ControlPlaneConfig struct {
 	TunnelID              types.TunnelID
 	OrganizationID        string
 	APIKey                string
+	TokenProvider         func(context.Context) (string, error) `json:"-" yaml:"-"`
 	MaxInFlightRequests   int
 	PollTimeout           time.Duration
 	InitialPollTimeout    time.Duration
@@ -598,7 +617,8 @@ func WriteUsage(fs *pflag.FlagSet, w io.Writer) {
 	_, _ = fmt.Fprintf(fs.Output(), "Usage of %s:\n", name)
 	fs.PrintDefaults()
 	_, _ = fmt.Fprintln(fs.Output(), "\nEnvironment variables:")
-	_, _ = fmt.Fprintln(fs.Output(), "  CONTROL_PLANE_API_KEY\tAPI key used to authenticate to the tunnel control plane (required; preferred)")
+	_, _ = fmt.Fprintln(fs.Output(), "  CONTROL_PLANE_API_KEY\tAPI key used to authenticate to the tunnel control plane (unless using AWS workload identity)")
+	_, _ = fmt.Fprintln(fs.Output(), "  CONTROL_PLANE_AWS_IDENTITY_PROVIDER_ID, CONTROL_PLANE_AWS_SERVICE_ACCOUNT_ID\tOpenAI IDs for AWS workload identity")
 	_, _ = fmt.Fprintln(fs.Output(), "  OPENAI_API_KEY\tAPI key env var used when CONTROL_PLANE_API_KEY unset")
 	_, _ = fmt.Fprintln(fs.Output(), "  CONTROL_PLANE_TUNNEL_ID\tIdentifier for this client/tunnel (required)")
 	_, _ = fmt.Fprintln(fs.Output(), "  MCP_SERVER_URL or MCP_COMMAND\tMain MCP target (required unless poll channels exclude main)")
@@ -624,6 +644,8 @@ func RegisterFlags(fs *pflag.FlagSet, flavor Flavor) {
 	fs.String("control-plane.tunnel-id", "", "Identifier for this client/tunnel (env.CONTROL_PLANE_TUNNEL_ID)")
 	fs.String("control-plane.organization-id", "", "Organization ID to send as OpenAI-Organization on tunnel control-plane requests (env.CONTROL_PLANE_ORGANIZATION_ID)")
 	fs.String("control-plane.api-key", "", "Reference to environment variable or file containing the control-plane API key (format env:VARNAME or file:/path/to/secret)")
+	fs.String("control-plane.aws-identity-provider-id", "", "OpenAI identity provider ID for AWS workload identity")
+	fs.String("control-plane.aws-service-account-id", "", "OpenAI service account ID for AWS workload identity")
 	fs.String("control-plane.client-cert", "", "Path to PEM client certificate for control-plane mTLS (format <path|env:VAR|file:/path>) (env.CONTROL_PLANE_CLIENT_CERT)")
 	fs.String("control-plane.client-key", "", "Path to PEM client private key for control-plane mTLS (format <path|env:VAR|file:/path>) (env.CONTROL_PLANE_CLIENT_KEY)")
 	fs.String("control-plane.http-proxy", "", "Outbound HTTP proxy for the control plane (format <url|env:VAR>)")
@@ -1208,7 +1230,7 @@ func getControlPlaneAPIKey(flagValue string, lookupEnv func(string) (string, boo
 		return val, nil
 	}
 
-	return "", errMissingControlPlaneAPIKey
+	return "", nil
 }
 
 func buildControlPlaneConfig(fs *pflag.FlagSet, lookupEnv func(string) (string, bool), globalProxy *url.URL, globalProxySource ProxySource) (ControlPlaneConfig, error) {
@@ -1358,11 +1380,14 @@ func buildControlPlaneConfig(fs *pflag.FlagSet, lookupEnv func(string) (string, 
 		apiKeyFlagValue = flag.Value.String()
 	}
 
+	providerID := firstSet(getValue(fs, "control-plane.aws-identity-provider-id"), envOrDefault(lookupEnv, "CONTROL_PLANE_AWS_IDENTITY_PROVIDER_ID", ""))
+	serviceAccountID := firstSet(getValue(fs, "control-plane.aws-service-account-id"), envOrDefault(lookupEnv, "CONTROL_PLANE_AWS_SERVICE_ACCOUNT_ID", ""))
 	apiKey, err := getControlPlaneAPIKey(apiKeyFlagValue, lookupEnv)
 	if err != nil {
 		return ControlPlaneConfig{}, err
 	}
-	if err := ValidateControlPlaneAPIKey(apiKey); err != nil {
+	tokenProvider, err := controlPlaneTokenProvider(apiKey, providerID, serviceAccountID, baseURL)
+	if err != nil {
 		return ControlPlaneConfig{}, err
 	}
 
@@ -1382,6 +1407,7 @@ func buildControlPlaneConfig(fs *pflag.FlagSet, lookupEnv func(string) (string, 
 		TunnelID:               types.TunnelID(tunnelID),
 		OrganizationID:         organizationID,
 		APIKey:                 apiKey,
+		TokenProvider:          tokenProvider,
 		MaxInFlightRequests:    maxInFlight,
 		PollTimeout:            pollTimeout,
 		InitialPollTimeout:     initialPollTimeout,
