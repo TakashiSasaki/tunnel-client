@@ -171,7 +171,10 @@ tunnel-client help quickstart
 
 The Formula installs the matching `tunnel-client`, bundled `cloudflared`,
 and companion manifest together, while exposing only the `tunnel-client`
-command. For Docker, Kubernetes, or VM deployments, see
+command. It also installs Bash, Zsh, and Fish completions for that version.
+If your shell does not load them automatically, follow
+[Homebrew's shell completion setup](https://docs.brew.sh/Shell-Completion).
+For Docker, Kubernetes, or VM deployments, see
 [`docs/deployment/overview.md`](docs/deployment/overview.md).
 
 To generate the shareable guide output locally:
