@@ -256,6 +256,16 @@ later requests can reach different children. Stop the old instance before
 starting its replacement, or use distinct tunnel IDs for independent instances.
 See [stdio deployment limits](docs/configuration.md#stdio-deployment-limits).
 
+By default, `tunnel-client` restarts a supervised stdio child after an
+unexpected exit, stdout EOF, or stdin write failure. Calls in progress may
+fail, and legacy callers must initialize the replacement child before retrying.
+If your deployment uses an external process supervisor to restart the whole
+client, set `--mcp.stdio-failure-policy=exit`,
+`MCP_STDIO_FAILURE_POLICY=exit`, or YAML `mcp.stdio_failure_policy: exit`.
+That setting restores nonzero client exit on these failures; intentional
+shutdown still exits successfully. Remove the new flag or YAML key before
+downgrading to a version that does not recognize it.
+
 Stdio initialization is checked automatically. Legacy calls require a successful
 `initialize` exchange followed by `notifications/initialized`; premature calls
 return `mcp_initialization_required` immediately. Self-contained MCP requests

@@ -40,6 +40,16 @@ const (
 	MCPTransportInMemory       MCPTransportKind = "in-memory"
 )
 
+// StdioFailurePolicy selects who recovers an unexpectedly closed stdio MCP
+// child. The zero value behaves like StdioFailurePolicyRestart for callers
+// constructing MCPConfig directly.
+type StdioFailurePolicy string
+
+const (
+	StdioFailurePolicyRestart StdioFailurePolicy = "restart"
+	StdioFailurePolicyExit    StdioFailurePolicy = "exit"
+)
+
 // HarpoonTransportKind enumerates supported harpoon transports.
 type HarpoonTransportKind string
 
@@ -395,6 +405,10 @@ type MCPConfig struct {
 	// MCP lifecycle when an older caller omits notifications/initialized. False
 	// preserves the legacy verbatim-forwarding behavior for existing servers.
 	StdioSendInitializedNotification bool
+	// StdioFailurePolicy controls recovery after an unexpected stdio child loss.
+	// The zero value uses internal restart; exit delegates recovery to an
+	// external supervisor.
+	StdioFailurePolicy StdioFailurePolicy
 	// ForwardTraceContext opts in to forwarding validated tunnel trace context
 	// through MCP params._meta. False preserves the caller's request metadata.
 	ForwardTraceContext bool
@@ -624,6 +638,7 @@ func WriteUsage(fs *pflag.FlagSet, w io.Writer) {
 	_, _ = fmt.Fprintln(fs.Output(), "  OPENAI_API_KEY\tAPI key env var used when CONTROL_PLANE_API_KEY unset")
 	_, _ = fmt.Fprintln(fs.Output(), "  CONTROL_PLANE_TUNNEL_ID\tIdentifier for this client/tunnel (required)")
 	_, _ = fmt.Fprintln(fs.Output(), "  MCP_SERVER_URL or MCP_COMMAND\tMain MCP target (required unless poll channels exclude main)")
+	_, _ = fmt.Fprintln(fs.Output(), "  MCP_STDIO_FAILURE_POLICY\tRecovery after an unexpected stdio child loss: restart or exit (default: restart)")
 	_, _ = fmt.Fprintln(fs.Output(), "  MCP_FORWARD_TRACE_CONTEXT\tOpt in to forwarding traceparent/tracestate through MCP params._meta (default: false)")
 	_, _ = fmt.Fprintln(fs.Output(), "  FORWARD_REQUEST_ID\tHTTP egress surfaces for the original X-Request-Id (default: mcp)")
 }
@@ -669,6 +684,7 @@ func RegisterFlags(fs *pflag.FlagSet, flavor Flavor) {
 	fs.String("http-proxy", "", "Global outbound HTTP proxy (applies to control-plane, MCP, and Harpoon) (format <url|env:VAR>)")
 	fs.StringArray("mcp.server-url", nil, "Target MCP server URL (repeatable; format url=...,channel=...,unix-socket=...,http-proxy=...,client-cert=...,client-key=...) (env.MCP_SERVER_URL)")
 	fs.StringArray("mcp.command", nil, "Command to launch an MCP server over stdio (repeatable; format command=...,channel=...) (env.MCP_COMMAND)")
+	fs.String("mcp.stdio-failure-policy", string(StdioFailurePolicyRestart), "Recovery after an unexpected stdio child loss: restart internally or exit for an external supervisor (env.MCP_STDIO_FAILURE_POLICY)")
 	fs.Bool("mcp.stdio-send-initialized-notification", false, "Opt in to sending notifications/initialized after a successful stdio initialize response (env.MCP_STDIO_SEND_INITIALIZED_NOTIFICATION)")
 	fs.Bool("mcp.forward-trace-context", false, "Opt in to forwarding traceparent/tracestate through MCP params._meta over stdio and HTTP (env.MCP_FORWARD_TRACE_CONTEXT)")
 	fs.Bool("tracing.enabled", false, "Opt in to local request tracing (env.TRACING_ENABLED)")
@@ -1984,6 +2000,33 @@ func resolveRequiredSecretReference(source, raw string, lookupEnv func(string) (
 	return value, nil
 }
 
+func parseStdioFailurePolicy(raw string) (StdioFailurePolicy, error) {
+	switch StdioFailurePolicy(raw) {
+	case StdioFailurePolicyRestart, StdioFailurePolicyExit:
+		return StdioFailurePolicy(raw), nil
+	default:
+		return "", errors.New("must be restart or exit")
+	}
+}
+
+func resolveStdioFailurePolicy(fs *pflag.FlagSet, lookupEnv func(string) (string, bool)) (StdioFailurePolicy, error) {
+	if flag := fs.Lookup("mcp.stdio-failure-policy"); flag != nil && flag.Changed {
+		policy, err := parseStdioFailurePolicy(flag.Value.String())
+		if err != nil {
+			return "", fmt.Errorf("invalid --mcp.stdio-failure-policy: %w", err)
+		}
+		return policy, nil
+	}
+	if raw, ok := lookupEnv("MCP_STDIO_FAILURE_POLICY"); ok && raw != "" {
+		policy, err := parseStdioFailurePolicy(raw)
+		if err != nil {
+			return "", fmt.Errorf("invalid MCP_STDIO_FAILURE_POLICY: %w", err)
+		}
+		return policy, nil
+	}
+	return StdioFailurePolicyRestart, nil
+}
+
 func buildMCPConfig(fs *pflag.FlagSet, lookupEnv func(string) (string, bool), globalProxy *url.URL, globalProxySource ProxySource, mainServerURL string) (MCPConfig, error) {
 	commandEntries, err := resolveMCPEntries(fs, lookupEnv, "mcp.command", "MCP_COMMAND")
 	if err != nil {
@@ -2050,6 +2093,10 @@ func buildMCPConfig(fs *pflag.FlagSet, lookupEnv func(string) (string, bool), gl
 		"mcp.stdio-send-initialized-notification",
 		"MCP_STDIO_SEND_INITIALIZED_NOTIFICATION",
 	)
+	if err != nil {
+		return MCPConfig{}, err
+	}
+	stdioFailurePolicy, err := resolveStdioFailurePolicy(fs, lookupEnv)
 	if err != nil {
 		return MCPConfig{}, err
 	}
@@ -2141,6 +2188,7 @@ func buildMCPConfig(fs *pflag.FlagSet, lookupEnv func(string) (string, bool), gl
 		ChannelBindings:                  bindings,
 		StartupWaitTimeout:               startupWaitTimeout,
 		StdioSendInitializedNotification: stdioSendInitializedNotification,
+		StdioFailurePolicy:               stdioFailurePolicy,
 		ForwardTraceContext:              forwardTraceContext,
 		ConnectionMaxTTL:                 ttl,
 		MaxConcurrentRequests:            maxConcurrent,

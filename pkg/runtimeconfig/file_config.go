@@ -110,6 +110,7 @@ type fileMCPConfig struct {
 	DiscoveryExtraHeaders            map[string]string  `yaml:"discovery_extra_headers"`
 	OAuthTrustedOrigins              []string           `yaml:"oauth_trusted_origins"`
 	StartupWaitTimeout               *string            `yaml:"startup_wait_timeout"`
+	StdioFailurePolicy               *string            `yaml:"stdio_failure_policy"`
 	StdioSendInitializedNotification *bool              `yaml:"stdio_send_initialized_notification"`
 	ForwardTraceContext              *bool              `yaml:"forward_trace_context"`
 	ConnectionMaxTTL                 *string            `yaml:"connection_max_ttl"`
@@ -438,6 +439,7 @@ func (c fileConfig) toEnv(lookupEnv func(string) (string, bool)) (map[string]str
 		env["MCP_OAUTH_TRUSTED_ORIGINS"] = strings.Join(c.MCP.OAuthTrustedOrigins, "\n")
 	}
 	setString(env, "MCP_STARTUP_WAIT_TIMEOUT", c.MCP.StartupWaitTimeout)
+	setString(env, "MCP_STDIO_FAILURE_POLICY", c.MCP.StdioFailurePolicy)
 	setBool(env, "MCP_STDIO_SEND_INITIALIZED_NOTIFICATION", c.MCP.StdioSendInitializedNotification)
 	setBool(env, "MCP_FORWARD_TRACE_CONTEXT", c.MCP.ForwardTraceContext)
 	setString(env, "MCP_CONNECTION_MAX_TTL", c.MCP.ConnectionMaxTTL)

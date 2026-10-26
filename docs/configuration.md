@@ -603,12 +603,26 @@ routing, streaming, OAuth discovery, and common setup pitfalls, see
   - Required: yes for the `main` channel (unless `--mcp.server-url` supplies `main`)
   - Legacy form: `--mcp.command="npx -y @org/main-mcp"` (defaults to `main`)
   - Channel-qualified form: `--mcp.command="channel=bar,command=npx -y @org/bar-mcp"`
-  - Behavior: spawns the command once and uses the child process stdin/stdout for MCP frames
+  - Behavior: runs the command as a supervised child and uses its stdin/stdout for MCP frames
   - Deployment limit: multiple active `tunnel-client` instances sharing a
     tunnel ID with stdio bindings are **not supported**. See
     [stdio deployment limits](#stdio-deployment-limits).
   - Note: when using `MCP_COMMAND` with multiple entries, separate entries with
     newlines so semicolons remain part of the command.
+- **Stdio failure policy**
+  - Flag: `--mcp.stdio-failure-policy=restart|exit`
+  - Env: `MCP_STDIO_FAILURE_POLICY`
+  - YAML: `mcp.stdio_failure_policy`
+  - Default: `restart` in all three tunnel-client flavors.
+  - `restart` starts a replacement child after an unexpected exit, stdout EOF,
+    or stdin write failure. In-flight calls can fail; callers must initialize
+    the replacement child before retrying legacy calls.
+  - `exit` makes tunnel-client exit nonzero on those failures so an external
+    process supervisor can restart the whole client. An intentional client
+    shutdown does not trigger either recovery path.
+  - This setting applies to all stdio channel bindings in the instance and has
+    no effect on HTTP MCP bindings. Before downgrading to a client without it,
+    remove its YAML key and CLI flag; older clients reject unknown keys and flags.
 - **Automatic stdio initialization guard**
   - Each request selects its protocol lifecycle automatically; no configuration
     is required. This applies to stdio channels only.
@@ -616,8 +630,9 @@ routing, streaming, OAuth discovery, and common setup pitfalls, see
     before the shared child completes a successful `initialize` exchange and
     receives `notifications/initialized`. This prevents requests from reaching
     a stateful stdio server before it is ready.
-  - The caller owns initialization and recovery. The guard does not synthesize
-    `initialize`, replay rejected requests, or initialize a replacement child.
+  - The caller owns initialization and request retry after child recovery. The
+    guard does not synthesize `initialize`, replay rejected requests, or
+    initialize a replacement child.
     The notification shim below can supply `notifications/initialized` after
     the caller's successful `initialize` response.
   - The client reports rejected calls with `status_code: 409`, JSON-RPC code `-32002`, and
@@ -857,6 +872,31 @@ affinity; it does not implement routing affinity. The
 `--mcp.stdio-send-initialized-notification` option only sends the notification
 after a successful forwarded `initialize` response. It does not initialize
 every replica or make multiple stdio instances safe.
+
+By default, if a stdio child exits unexpectedly, closes stdout, or stops
+accepting stdin writes, `tunnel-client` starts a replacement child. Set
+`--mcp.stdio-failure-policy=exit` to exit nonzero and delegate recovery to an
+external process supervisor. An intentional client shutdown still exits
+successfully.
+
+### Stdio failure policy upgrade and rollback
+
+Deployments that rely on a process supervisor restarting the entire client
+should select `exit` when upgrading to a version with the `restart` default.
+Use `MCP_STDIO_FAILURE_POLICY=exit` while older and newer binaries may read the
+same deployment configuration; add the YAML key or CLI flag only after older
+binaries are no longer used. The `exit` policy remains supported throughout
+this rollout and rollback window. Removing it would require a separate,
+reviewed deprecation and migration plan.
+
+Upgrade one stdio tunnel at a time without overlapping active clients. Before
+promoting an upgraded deployment, verify that an unexpected child failure
+either starts a replacement child under `restart` or exits nonzero under
+`exit`. For `restart`, also verify that legacy callers can initialize the new
+child and complete a subsequent request; requests in flight during failure
+may fail and are not replayed. If that validation fails, select `exit` to
+restore whole-client supervision or roll back the binary. Remove the new YAML
+key or CLI flag before rolling back to a version that does not recognize it.
 
 ## Harpoon MCP (outbound HTTP allowlist)
 
