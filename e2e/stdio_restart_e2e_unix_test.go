@@ -45,6 +45,13 @@ func TestHarnessStdioRestartsChildAfterSuccessfulToolResponse(t *testing.T) {
 	invocationLog := filepath.Join(dir, "stdio-invocations.log")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	// Keep a writer open across child restarts so closing one child's writer
+	// cannot make the next PID read see EOF.
+	startup, err := os.OpenFile(startupPipe, os.O_RDWR, 0)
+	if err != nil {
+		t.Fatalf("open child startup pipe: %v", err)
+	}
+	startupReader := bufio.NewReader(startup)
 	childStarts := make(chan struct {
 		pid int
 		err error
@@ -56,16 +63,10 @@ func TestHarnessStdioRestartsChildAfterSuccessfulToolResponse(t *testing.T) {
 			if ctx.Err() != nil {
 				return
 			}
-			pipe, err := os.Open(startupPipe)
-			if err != nil {
-				childStarts <- struct {
-					pid int
-					err error
-				}{err: err}
+			line, readErr := startupReader.ReadString('\n')
+			if ctx.Err() != nil {
 				return
 			}
-			line, readErr := bufio.NewReader(pipe).ReadString('\n')
-			closeErr := pipe.Close()
 			if readErr != nil {
 				childStarts <- struct {
 					pid int
@@ -73,17 +74,7 @@ func TestHarnessStdioRestartsChildAfterSuccessfulToolResponse(t *testing.T) {
 				}{err: readErr}
 				return
 			}
-			if closeErr != nil {
-				childStarts <- struct {
-					pid int
-					err error
-				}{err: closeErr}
-				return
-			}
 			pid, err := strconv.Atoi(strings.TrimSpace(line))
-			if ctx.Err() != nil {
-				return
-			}
 			childStarts <- struct {
 				pid int
 				err error
@@ -95,18 +86,15 @@ func TestHarnessStdioRestartsChildAfterSuccessfulToolResponse(t *testing.T) {
 	}()
 	t.Cleanup(func() {
 		cancel()
-		// A failed restart can leave the reader waiting in open(2). Opening
-		// the FIFO's write side wakes it so the goroutine can observe ctx.
-		unblock, err := os.OpenFile(startupPipe, os.O_RDWR|syscall.O_NONBLOCK, 0)
-		if err == nil {
-			_, _ = unblock.WriteString("0\n")
-			_ = unblock.Close()
-		}
+		// Wake a reader waiting for a child that never started. Use the held
+		// descriptor so cleanup cannot race another FIFO open or writer close.
+		_, _ = startup.WriteString("0\n")
 		select {
 		case <-startupReaderDone:
 		case <-time.After(time.Second):
 			t.Errorf("child startup reader did not stop after cleanup")
 		}
+		_ = startup.Close()
 	})
 
 	firstResponsePosted := make(chan struct{})
