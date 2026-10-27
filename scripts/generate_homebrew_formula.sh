@@ -139,6 +139,23 @@ class TunnelClient < Formula
     generate_completions_from_executable(bin/"tunnel-client", "completion")
   end
 
+  service do
+    run [opt_bin/"tunnel-client", "run", "--profile-file", etc/"tunnel-client.yaml"]
+    keep_alive true
+    environment_variables PATH: std_service_path_env
+    log_path var/"log/tunnel-client.log"
+    error_log_path var/"log/tunnel-client.log"
+  end
+
+  def caveats
+    <<~EOS
+      Before starting the service, copy your configured profile to:
+        #{etc}/tunnel-client.yaml
+      Use absolute paths and file: references for secrets in that profile.
+      The service does not load your interactive shell configuration.
+    EOS
+  end
+
   test do
     assert_match version.to_s, shell_output("#{bin}/tunnel-client --version")
     assert_match "tunnel-client", (bash_completion/"tunnel-client").read

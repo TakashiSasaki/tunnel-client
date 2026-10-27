@@ -185,6 +185,85 @@ make end-user-guide-html
 make end-user-guide-slides
 ```
 
+### Start at macOS login
+
+The Homebrew Formula supports `brew services`. It supervises
+`tunnel-client run` using the profile at
+`$(brew --prefix)/etc/tunnel-client.yaml`, starts at login, and restarts the
+runtime after it exits. Installation and upgrades do not create or replace
+that profile.
+
+First, select the profile you already configured. If it belongs to a managed
+alias, find its `profile_path` with `tunnel-client runtimes status <alias> --json`,
+then run `tunnel-client runtimes stop <alias>` before starting the service.
+Copy the profile to the service location, preserving your custom settings:
+
+```bash
+cp /absolute/path/to/existing-profile.yaml "$(brew --prefix)/etc/tunnel-client.yaml"
+chmod 600 "$(brew --prefix)/etc/tunnel-client.yaml"
+```
+
+Use absolute paths in this profile, including paths to MCP executables,
+working directories, and secret files. The service includes Homebrew's `bin`
+and `sbin` on `PATH`, but does not load your interactive shell configuration.
+Replace shell-only `env:` references with persistent references such as this
+existing profile field:
+
+```yaml
+control_plane:
+  api_key: file:/Users/YOU/.config/tunnel-client/runtime.key
+```
+
+Store the runtime API key in that file with permissions `0600`; keep its
+directory private too. The service definition contains the profile path,
+not the key. Validate the profile, then start the service as your logged-in
+user, without `sudo`:
+
+```bash
+tunnel-client doctor --profile-file "$(brew --prefix)/etc/tunnel-client.yaml"
+brew services start openai/tools/tunnel-client
+brew services info openai/tools/tunnel-client
+tunnel-client health --url http://127.0.0.1:8080 --json
+```
+
+The health command above uses the default listener. If your profile configures
+a different health address or a `health.url_file`, use that address or
+`health --url-file /absolute/path/to/health-url` instead. An active service
+alone does not mean the tunnel is ready. Inspect
+`$(brew --prefix)/var/log/tunnel-client.log` and any `log.file` destination in
+your profile if startup fails.
+
+Use Homebrew to manage this runtime:
+
+```bash
+# Reload the profile/key or pick up the installed version after a brew upgrade.
+brew services restart openai/tools/tunnel-client
+
+# Stop the runtime and disable automatic login startup.
+brew services stop openai/tools/tunnel-client
+```
+
+The service uses Homebrew's stable `opt` path across upgrades. The CLI's
+`runtimes status` and `runtimes stop` commands manage its own detached
+processes; they do not discover or control the Homebrew service. Do not run
+`runtimes connect` for the same tunnel while the service is active: that
+command writes a generated profile and starts a separate runtime. Stop the
+service before switching back to CLI management. Keep only one runtime active
+for the tunnel during the switch, especially for stdio or stateful MCP servers.
+
+The per-user macOS service runs during your login session, not before login
+or after logout. Sleep suspends the Mac's work; wake allows the runtime's
+network retries to resume. Homebrew's launchd service restarts an exited
+process, but does not restart one merely because readiness fails. Start a
+local HTTP MCP server through its own supervisor. For a server that starts
+later, set `mcp.startup_wait_timeout` (for example, `2m`) in the profile to
+allow startup connection retries. If that window expires, restart the service
+after the MCP server is available; the process can remain alive with its
+startup probe failed. After a server restart, check readiness and logs;
+existing MCP sessions may need to be initialized again. For a stdio target,
+the runtime owns the MCP child. Do not assume interrupted tool calls are
+replayed.
+
 ## For Codex / Copilot
 
 If you want the shortest supported path from a local or localhost MCP server to
@@ -195,8 +274,8 @@ lifecycle work, use the native `tunnel-client runtimes ...` and
 
 Supervision choice:
 
-- Use `tunnel-client run ...` when you intentionally want a foreground daemon
-  attached to the current terminal.
+- Use `tunnel-client run ...` for a foreground daemon attached to the current
+  terminal or supervised by the OS; see [macOS login startup](#start-at-macos-login).
 - For a long-lived local runtime managed by Codex, prefer
   `tunnel-client runtimes connect ...`. Do not use `nohup` or `disown` as the
   tunnel-client supervision path.

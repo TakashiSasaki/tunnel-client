@@ -54,6 +54,12 @@ assert_contains "${generated}" 'sha256 "dddddddddddddddddddddddddddddddddddddddd
 assert_contains "${generated}" 'if Hardware::CPU.is_64_bit?'
 assert_contains "${generated}" 'libexec.install "tunnel-client", "cloudflared", "cloudflared-manifest.json"'
 assert_contains "${generated}" 'bin.write_exec_script libexec/"tunnel-client"'
+assert_contains "${generated}" 'service do'
+assert_contains "${generated}" 'run [opt_bin/"tunnel-client", "run", "--profile-file", etc/"tunnel-client.yaml"]'
+assert_contains "${generated}" 'keep_alive true'
+assert_contains "${generated}" 'environment_variables PATH: std_service_path_env'
+assert_contains "${generated}" 'log_path var/"log/tunnel-client.log"'
+assert_contains "${generated}" 'error_log_path var/"log/tunnel-client.log"'
 assert_contains "${generated}" 'assert_match version.to_s, shell_output("#{bin}/tunnel-client --version")'
 
 command -v ruby >/dev/null 2>&1 || fail "ruby is required for formula syntax validation"
