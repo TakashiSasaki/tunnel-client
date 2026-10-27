@@ -65,6 +65,69 @@ assert_contains "${generated}" 'assert_match version.to_s, shell_output("#{bin}/
 command -v ruby >/dev/null 2>&1 || fail "ruby is required for formula syntax validation"
 ruby -c "${formula}" >/dev/null
 
+# Exercise the generated install method before Homebrew's cleanup makes bin
+# wrappers executable. The packaged program is executable when installed.
+ruby - "${formula}" "${tmp_dir}/install" <<'RUBY'
+require "fileutils"
+require "pathname"
+require "shellwords"
+
+class InstallPath < Pathname
+  def install(*sources)
+    mkpath
+    sources.each { |source| FileUtils.cp(source, self/source, preserve: true) }
+  end
+
+  def write_exec_script(target)
+    mkpath
+    wrapper = self/target.basename
+    wrapper.write("#!/bin/sh\nexec #{target.to_s.shellescape} \"$@\"\n")
+    wrapper.chmod(0o644)
+  end
+end
+
+class InstallFixture
+  attr_reader :bin, :libexec, :completions
+
+  def initialize(prefix)
+    @bin = InstallPath.new(Pathname.new(prefix)/"bin")
+    @libexec = InstallPath.new(Pathname.new(prefix)/"libexec")
+    @completions = {}
+  end
+
+  def generate_completions_from_executable(*command)
+    %w[bash zsh fish].each do |shell|
+      output = IO.popen([*command.map(&:to_s), shell], &:read)
+      abort "completion generation failed for #{shell}" unless $?.success?
+      @completions[shell] = output
+    end
+  end
+end
+
+formula = File.read(ARGV.fetch(0))
+install = formula[/^  def install\n.*?^  end\n/m]
+abort "generated formula has no install method" unless install
+InstallFixture.class_eval(install, ARGV.fetch(0))
+staging = Pathname.new(ARGV.fetch(1))
+staging.mkpath
+Dir.chdir(staging) do
+  Pathname("tunnel-client").write(<<~SH)
+    #!/bin/sh
+    test "$1" = completion || exit 1
+    printf 'completion for %s\\n' "$2"
+  SH
+  File.chmod(0o755, "tunnel-client")
+  Pathname("cloudflared").write("fixture\n")
+  Pathname("cloudflared-manifest.json").write("{}\n")
+  fixture = InstallFixture.new(staging/"prefix with spaces")
+  fixture.install
+  %w[bash zsh fish].each do |shell|
+    expected = "completion for #{shell}\n"
+    abort "missing or incorrect #{shell} completion" unless fixture.completions[shell] == expected
+  end
+end
+RUBY
+
 missing_checksums="${tmp_dir}/missing.txt"
 grep -v 'darwin-arm64' "${checksums}" > "${missing_checksums}"
 assert_fails_with "expected exactly one checksum for tunnel-client-v1.2.3-darwin-arm64.zip, found 0" \
