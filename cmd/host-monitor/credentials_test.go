@@ -67,16 +67,16 @@ func TestCredentialCLIInputsAndRedaction(t *testing.T) {
 	env := map[string]string{"CONTROL_PLANE_API_KEY": "ambient-secret-not-to-persist", "CONTROL_PLANE_TUNNEL_ID": "ambient-tunnel"}
 	store := &memoryCredentialStore{}
 	var out bytes.Buffer
-	cli := credentialCLI{in: strings.NewReader("stdin-secret\n"), out: &out, getenv: func(k string) string { return env[k] }, open: func(path string) credentialStore { store.path = path; return store }}
+	cli := credentialCLI{in: strings.NewReader("stdin-secret\n"), out: &out, getenv: func(k string) string { return env[k] }, open: func(path string, _ hostcredentials.Kind) credentialStore { store.path = path; return store }}
 	path := filepath.Join(t.TempDir(), "override.enc")
-	if err := cli.execute(ctx, []string{"set", "--tunnel-id", "tunnel_cli", "--api-key-stdin", "--organization-id", "org-test", "--credentials-file", path}, ""); err != nil {
+	if err := cli.execute(ctx, []string{"set", "--type", "runtime", "--tunnel-id", "tunnel_cli", "--api-key-stdin", "--organization-id", "org-test", "--credentials-file", path}, ""); err != nil {
 		t.Fatal(err)
 	}
 	if store.path != path || store.record.APIKey != "stdin-secret" || store.record.TunnelID != "tunnel_cli" {
 		t.Fatal("explicit CLI input not used")
 	}
 	cli.in = strings.NewReader("replacement-secret\n")
-	if err := cli.execute(ctx, []string{"update", "--api-key-stdin", "--unset", "organization-id"}, path); err != nil {
+	if err := cli.execute(ctx, []string{"update", "--type", "runtime", "--api-key-stdin", "--unset", "organization-id"}, path); err != nil {
 		t.Fatal(err)
 	}
 	if store.record.APIKey != "replacement-secret" || store.record.TunnelID != "tunnel_cli" || store.record.OrganizationID != "" {
@@ -85,7 +85,7 @@ func TestCredentialCLIInputsAndRedaction(t *testing.T) {
 	for _, action := range []string{"status", "doctor"} {
 		out.Reset()
 		before := store.writes
-		if err := cli.execute(ctx, []string{action, "--json"}, path); err != nil {
+		if err := cli.execute(ctx, []string{action, "--type", "runtime", "--json"}, path); err != nil {
 			t.Fatal(err)
 		}
 		var status credentialStatus
@@ -99,16 +99,16 @@ func TestCredentialCLIInputsAndRedaction(t *testing.T) {
 			t.Fatal("status/doctor wrote data or leaked key")
 		}
 	}
-	if err := cli.execute(ctx, []string{"set", "--from-env"}, path); !errors.Is(err, hostcredentials.ErrExists) {
+	if err := cli.execute(ctx, []string{"set", "--type", "runtime", "--from-env"}, path); !errors.Is(err, hostcredentials.ErrExists) {
 		t.Fatal("set overwrote record")
 	}
-	if err := cli.execute(ctx, []string{"delete"}, path); err != nil {
+	if err := cli.execute(ctx, []string{"delete", "--type", "runtime"}, path); err != nil {
 		t.Fatal(err)
 	}
-	if err := cli.execute(ctx, []string{"delete"}, path); err != nil {
+	if err := cli.execute(ctx, []string{"delete", "--type", "runtime"}, path); err != nil {
 		t.Fatal(err)
 	}
-	if err := cli.execute(ctx, []string{"set", "--from-env"}, path); err != nil {
+	if err := cli.execute(ctx, []string{"set", "--type", "runtime", "--from-env"}, path); err != nil {
 		t.Fatal(err)
 	}
 	if store.record.APIKey != env["CONTROL_PLANE_API_KEY"] {
@@ -124,9 +124,10 @@ func TestCredentialCLIRejectsInvalidAndNoninteractiveInputs(t *testing.T) {
 		{"status", "--api-key-stdin"}, {"doctor", "--from-env"}, {"delete", "--tunnel-id", "x"},
 		{"set", "--json"}, {"set", "--credentials-file="}, {"set", "unexpected-positional-secret"},
 	} {
+		args = append([]string{args[0], "--type", "runtime"}, args[1:]...)
 		store := &memoryCredentialStore{}
 		var out bytes.Buffer
-		cli := credentialCLI{in: strings.NewReader(""), out: &out, getenv: func(string) string { return "" }, open: func(path string) credentialStore { store.path = path; return store }}
+		cli := credentialCLI{in: strings.NewReader(""), out: &out, getenv: func(string) string { return "" }, open: func(path string, _ hostcredentials.Kind) credentialStore { store.path = path; return store }}
 		err := cli.execute(context.Background(), args, filepath.Join(t.TempDir(), "test.enc"))
 		if err == nil || store.writes != 0 {
 			t.Fatalf("invalid input accepted: %v", args)
@@ -160,7 +161,7 @@ func TestReadOnlyCredentialCommandsCreateNothing(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "missing-directory", "credentials.enc")
 	for _, action := range []string{"status", "doctor", "delete"} {
-		_ = execute(context.Background(), []string{"credentials", action, "--credentials-file", path}, strings.NewReader(""), io.Discard, func(string) string { return "" })
+		_ = execute(context.Background(), []string{"credentials", action, "--type", "runtime", "--credentials-file", path}, strings.NewReader(""), io.Discard, func(string) string { return "" })
 	}
 	entries, err := os.ReadDir(root)
 	if err != nil || len(entries) != 0 {

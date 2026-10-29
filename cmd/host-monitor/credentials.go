@@ -32,30 +32,34 @@ type credentialCLI struct {
 	in     io.Reader
 	out    io.Writer
 	getenv func(string) string
-	open   func(string) credentialStore
+	open   func(string, hostcredentials.Kind) credentialStore
 }
 
 const credentialsHelp = `Manage encrypted local tunnel credentials (no GUI required).
 
-  host-monitor credentials set       Create; refuse to overwrite
-  host-monitor credentials update    Change selected fields; require an existing record
-  host-monitor credentials delete    Delete local credentials (idempotent)
-  host-monitor credentials status    Show metadata and sources, never the API key
-  host-monitor credentials doctor    Check the backend and existing file without writing
+  host-monitor credentials set    --type runtime|admin   Create; refuse to overwrite
+  host-monitor credentials update --type runtime|admin   Change selected fields
+  host-monitor credentials delete --type runtime|admin   Delete this type only
+  host-monitor credentials status --type runtime|admin   Show metadata, never the key
+  host-monitor credentials doctor --type runtime|admin   Check without writing
 
 Options:
+  --type runtime|admin      Required for every operation; no implicit default
   --credentials-file PATH    Override the encrypted credentials file
-  --tunnel-id ID            Set/update the tunnel ID
+  --tunnel-id ID            Set/update the tunnel ID (runtime only)
   --api-key-stdin           Read the API key from stdin (never from an argument)
   --base-url URL            Set/update the control-plane URL
   --organization-id ID      Set/update the organization
-  --from-env               Explicitly read CONTROL_PLANE_* for set/update
+  --from-env               Runtime: CONTROL_PLANE_API_KEY + tunnel ID
+                           Admin: OPENAI_ADMIN_KEY (no tunnel ID)
   --unset FIELD            Clear base-url or organization-id (update only; repeatable)
   --json                   Machine-readable status/doctor output
 
 Without input options, set/update prompt in a terminal; API keys are not echoed.
 Without a terminal, specify --api-key-stdin or --from-env as appropriate.
 Changes affect the next process start. Delete does not revoke a remote API key.
+Normal monitor startup reads only runtime credentials. Admin storage adds no
+remote tunnel-management commands. Runtime files from older versions still work.
 `
 
 type repeatedStrings []string
@@ -75,6 +79,7 @@ func (c credentialCLI) execute(ctx context.Context, args []string, defaultOverri
 	flags := flag.NewFlagSet("credentials "+action, flag.ContinueOnError)
 	flags.SetOutput(io.Discard)
 	pathFlag := flags.String("credentials-file", defaultOverride, "")
+	typeFlag := flags.String("type", "", "")
 	tunnelID := flags.String("tunnel-id", "", "")
 	baseURL := flags.String("base-url", "", "")
 	organization := flags.String("organization-id", "", "")
@@ -95,6 +100,13 @@ func (c credentialCLI) execute(ctx context.Context, args []string, defaultOverri
 	}
 	visited := make(map[string]bool)
 	flags.Visit(func(f *flag.Flag) { visited[f.Name] = true })
+	kind := hostcredentials.Kind(*typeFlag)
+	if !kind.Valid() {
+		return usageError("explicit --type runtime or --type admin is required")
+	}
+	if kind == hostcredentials.Admin && visited["tunnel-id"] {
+		return usageError("--tunnel-id is only supported for --type runtime")
+	}
 	if visited["credentials-file"] && *pathFlag == "" {
 		return usageError("--credentials-file cannot be empty")
 	}
@@ -114,19 +126,19 @@ func (c credentialCLI) execute(ctx context.Context, args []string, defaultOverri
 			return usageError("--unset accepts base-url or organization-id and cannot be combined with setting that field")
 		}
 	}
-	path, err := hostcredentials.ResolvePath(*pathFlag, c.getenv)
+	path, err := hostcredentials.ResolvePathFor(kind, *pathFlag, c.getenv)
 	if err != nil {
 		return err
 	}
-	store := c.open(path)
+	store := c.open(path, kind)
 	if action == "status" || action == "doctor" {
-		return c.status(ctx, store, action == "doctor", *jsonOutput)
+		return c.status(ctx, store, kind, action == "doctor", *jsonOutput)
 	}
 	if action == "delete" {
 		if err := store.Delete(ctx); err != nil {
 			return err
 		}
-		_, err := fmt.Fprintf(c.out, "Local credentials deleted (if present): %s\nRestart running processes to stop using credentials already loaded in memory.\n", store.Path())
+		_, err := fmt.Fprintf(c.out, "Local %s credentials deleted (if present): %s\nRestart running processes to stop using credentials already loaded in memory.\n", kind, store.Path())
 		return err
 	}
 	exists, err := store.Exists()
@@ -141,7 +153,7 @@ func (c credentialCLI) execute(ctx context.Context, args []string, defaultOverri
 	}
 	patch := make(map[string]string)
 	if *fromEnv {
-		for field, env := range credentialEnvNames {
+		for field, env := range credentialEnvNamesFor(kind) {
 			if value := strings.TrimSpace(c.getenv(env)); value != "" {
 				patch[field] = value
 			}
@@ -161,8 +173,8 @@ func (c credentialCLI) execute(ctx context.Context, args []string, defaultOverri
 			patch["api-key"] = strings.TrimSpace(string(input))
 			clear(input)
 		}
-		if !inputOptions || (action == "set" && !*keyStdin && (patch["tunnel-id"] == "" || patch["api-key"] == "")) {
-			if err := c.prompt(action == "update", patch); err != nil {
+		if !inputOptions || (action == "set" && !*keyStdin && ((kind == hostcredentials.Runtime && patch["tunnel-id"] == "") || patch["api-key"] == "")) {
+			if err := c.prompt(action == "update", patch, kind); err != nil {
 				return err
 			}
 		}
@@ -189,7 +201,7 @@ func (c credentialCLI) execute(ctx context.Context, args []string, defaultOverri
 		return nil
 	}
 	if action == "set" {
-		var record hostcredentials.Record
+		record := hostcredentials.Record{Kind: kind}
 		_ = apply(&record)
 		err = store.Create(ctx, record)
 	} else {
@@ -198,21 +210,30 @@ func (c credentialCLI) execute(ctx context.Context, args []string, defaultOverri
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintf(c.out, "Encrypted credentials saved: %s\nChanges take effect on the next process start.\n", store.Path())
+	_, err = fmt.Fprintf(c.out, "Encrypted %s credentials saved: %s\nChanges take effect on the next process start.\n", kind, store.Path())
 	return err
 }
 
-var credentialEnvNames = map[string]string{
-	"tunnel-id": "CONTROL_PLANE_TUNNEL_ID", "api-key": "CONTROL_PLANE_API_KEY",
-	"base-url": "CONTROL_PLANE_BASE_URL", "organization-id": "CONTROL_PLANE_ORGANIZATION_ID",
+func credentialEnvNamesFor(kind hostcredentials.Kind) map[string]string {
+	fields := map[string]string{"base-url": "CONTROL_PLANE_BASE_URL", "organization-id": "CONTROL_PLANE_ORGANIZATION_ID"}
+	if kind == hostcredentials.Admin {
+		fields["api-key"] = "OPENAI_ADMIN_KEY"
+	} else {
+		fields["api-key"] = "CONTROL_PLANE_API_KEY"
+		fields["tunnel-id"] = "CONTROL_PLANE_TUNNEL_ID"
+	}
+	return fields
 }
 
-func (c credentialCLI) prompt(update bool, patch map[string]string) error {
+func (c credentialCLI) prompt(update bool, patch map[string]string, kind hostcredentials.Kind) error {
 	file, ok := c.in.(*os.File)
 	if !ok || !term.IsTerminal(int(file.Fd())) {
-		return usageError("no terminal available; use --from-env or --tunnel-id with --api-key-stdin")
+		return usageError("no terminal available; use --from-env or --api-key-stdin (runtime also requires --tunnel-id)")
 	}
 	for _, field := range []string{"tunnel-id", "api-key", "base-url", "organization-id"} {
+		if kind == hostcredentials.Admin && field == "tunnel-id" {
+			continue
+		}
 		if _, supplied := patch[field]; supplied {
 			continue
 		}
@@ -257,21 +278,22 @@ func (c credentialCLI) prompt(update bool, patch map[string]string) error {
 }
 
 type credentialStatus struct {
-	Path             string            `json:"path"`
-	Backend          string            `json:"backend"`
-	Exists           bool              `json:"exists"`
-	Readable         bool              `json:"readable"`
-	BackendAvailable *bool             `json:"backend_available,omitempty"`
-	TunnelID         string            `json:"tunnel_id,omitempty"`
-	APIKeyConfigured bool              `json:"api_key_configured"`
-	CreatedAt        string            `json:"created_at,omitempty"`
-	UpdatedAt        string            `json:"updated_at,omitempty"`
-	Sources          map[string]string `json:"sources"`
-	Detail           string            `json:"detail,omitempty"`
+	Kind             hostcredentials.Kind `json:"type"`
+	Path             string               `json:"path"`
+	Backend          string               `json:"backend"`
+	Exists           bool                 `json:"exists"`
+	Readable         bool                 `json:"readable"`
+	BackendAvailable *bool                `json:"backend_available,omitempty"`
+	TunnelID         string               `json:"tunnel_id,omitempty"`
+	APIKeyConfigured bool                 `json:"api_key_configured"`
+	CreatedAt        string               `json:"created_at,omitempty"`
+	UpdatedAt        string               `json:"updated_at,omitempty"`
+	Sources          map[string]string    `json:"sources"`
+	Detail           string               `json:"detail,omitempty"`
 }
 
-func (c credentialCLI) status(ctx context.Context, store credentialStore, doctor, jsonOutput bool) error {
-	out := credentialStatus{Path: store.Path(), Backend: store.Backend(), Sources: make(map[string]string)}
+func (c credentialCLI) status(ctx context.Context, store credentialStore, kind hostcredentials.Kind, doctor, jsonOutput bool) error {
+	out := credentialStatus{Kind: kind, Path: store.Path(), Backend: store.Backend(), Sources: make(map[string]string)}
 	var operationErr error
 	if doctor {
 		err := store.Check(ctx)
@@ -296,7 +318,10 @@ func (c credentialCLI) status(ctx context.Context, store credentialStore, doctor
 		}
 	}
 	fullEnv := strings.TrimSpace(c.getenv("CONTROL_PLANE_TUNNEL_ID")) != "" && strings.TrimSpace(c.getenv("CONTROL_PLANE_API_KEY")) != ""
-	for field, env := range credentialEnvNames {
+	if kind == hostcredentials.Admin {
+		fullEnv = strings.TrimSpace(c.getenv("OPENAI_ADMIN_KEY")) != ""
+	}
+	for field, env := range credentialEnvNamesFor(kind) {
 		source := "unset"
 		if strings.TrimSpace(c.getenv(env)) != "" {
 			source = "environment"
@@ -327,11 +352,14 @@ func (c credentialCLI) status(ctx context.Context, store credentialStore, doctor
 			return err
 		}
 	} else {
-		fmt.Fprintf(c.out, "Path: %s\nBackend: %s\nStored: %t\nReadable: %t\nAPI key stored: %t (value never displayed)\n", out.Path, out.Backend, out.Exists, out.Readable, out.APIKeyConfigured)
+		fmt.Fprintf(c.out, "Type: %s\nPath: %s\nBackend: %s\nStored: %t\nReadable: %t\nAPI key stored: %t (value never displayed)\n", kind, out.Path, out.Backend, out.Exists, out.Readable, out.APIKeyConfigured)
 		if out.BackendAvailable != nil {
 			fmt.Fprintf(c.out, "Backend detected: %t\n", *out.BackendAvailable)
 		}
 		for _, field := range []string{"tunnel-id", "api-key", "base-url", "organization-id"} {
+			if kind == hostcredentials.Admin && field == "tunnel-id" {
+				continue
+			}
 			fmt.Fprintf(c.out, "%s source: %s\n", field, out.Sources[field])
 		}
 		if out.Detail != "" {

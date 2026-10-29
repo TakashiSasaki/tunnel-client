@@ -237,7 +237,9 @@ not advertise this tool.
 | `CONTROL_PLANE_BASE_URL` | SDK default: `https://api.openai.com` | Optional control-plane host override |
 | `CONTROL_PLANE_ORGANIZATION_ID` | Unset | Optional Platform organization |
 | `HOST_MONITOR_TIMEOUT` | `10s` | Per-tool context timeout; allowed `100ms`–`120s` |
-| `HOST_MONITOR_CREDENTIALS_FILE` | OS-specific path below | Encrypted credential file; overridden by `--credentials-file` |
+| `HOST_MONITOR_CREDENTIALS_FILE` | OS-specific path below | Runtime credential file; overridden by `--credentials-file` |
+| `HOST_MONITOR_ADMIN_CREDENTIALS_FILE` | Adjacent `credentials.admin.enc` in the OS default folder | Admin credential file for `credentials --type admin`; never used by monitor startup |
+| `OPENAI_ADMIN_KEY` | Unset | Imported only by `credentials set/update --type admin --from-env`; never a runtime fallback |
 
 There is no plaintext configuration-file option. Nonempty credential environment
 variables override corresponding saved fields; empty/whitespace values are treated
@@ -284,62 +286,89 @@ succeeded; it does not mean that a tool has been called from ChatGPT/Codex.
 ## Local encrypted credentials
 
 The same executable provides `credentials set`, `update`, `delete`, `status`,
-and `doctor`. These are local CLI commands, not MCP tools. They do not contact
+and `doctor`. Every operation requires explicit `--type runtime` or `--type admin`.
+These are local CLI commands, not MCP tools. They do not contact
 OpenAI, issue/revoke API keys, or restart an existing monitor. Stored changes apply
 on the next start. Run the commands under the same OS account as the monitor.
 
-| OS | Default encrypted file |
-| --- | --- |
-| Windows | `%LOCALAPPDATA%\TakashiSasaki\HostMonitor\credentials.enc` |
-| Linux | `$XDG_DATA_HOME/host-monitor/credentials.enc` |
-| Linux with unset/empty `XDG_DATA_HOME` | `$HOME/.local/share/host-monitor/credentials.enc` |
+Runtime credentials contain the runtime API key and tunnel ID. Admin credentials
+contain a separate admin API key and do not require or accept a tunnel ID. Both
+types can also store a URL and organization ID. The type is a local declaration;
+the CLI does not verify the key's permissions with OpenAI. Saving an admin key
+does not add remote tunnel-management commands to `host-monitor` or configure
+the separate upstream `tunnel-client` CLI.
+
+Existing version-1 runtime files without a `type` field remain readable as runtime
+credentials and do not need an explicit migration. Normal monitor startup never
+reads the admin file or falls back to `OPENAI_ADMIN_KEY`. The command syntax now
+requires type selection, including for read-only status/doctor commands.
+
+| OS | Runtime file | Admin file |
+| --- | --- | --- |
+| Windows | `%LOCALAPPDATA%\TakashiSasaki\HostMonitor\credentials.enc` | Same default directory, `credentials.admin.enc` |
+| Linux | `$XDG_DATA_HOME/host-monitor/credentials.enc` | Same default directory, `credentials.admin.enc` |
+| Linux with unset/empty `XDG_DATA_HOME` | `$HOME/.local/share/host-monitor/credentials.enc` | Same default directory, `credentials.admin.enc` |
 
 Windows resolves LocalAppData with the Known Folder API. Relative `XDG_DATA_HOME`
 is ignored per the XDG specification. File selection is `--credentials-file PATH`
-first, then `HOST_MONITOR_CREDENTIALS_FILE`, then the default above. Relative
+first, then `HOST_MONITOR_CREDENTIALS_FILE` for runtime or
+`HOST_MONITOR_ADMIN_CREDENTIALS_FILE` for admin, then the default above. The two
+environment overrides are independent: a custom runtime path does not relocate
+the admin file. An explicit path is used exactly as given for the selected type;
+no suffix is appended to an override. Relative
 overrides resolve against the command's working directory. All operations use
 exactly the selected path; choosing another path does not move an existing file.
 The path option works on normal startup and after a credential subcommand:
 
 ```text
 host-monitor --credentials-file /absolute/path/credentials.enc
-host-monitor credentials status --credentials-file /absolute/path/credentials.enc
+host-monitor credentials status --type runtime --credentials-file /absolute/path/credentials.enc
 ```
 
 In Windows PowerShell (add `.exe` to the command on Windows):
 
 ```powershell
-.\host-monitor.exe credentials set
-.\host-monitor.exe credentials status --json
-.\host-monitor.exe credentials update
-.\host-monitor.exe credentials delete
-.\host-monitor.exe credentials doctor --json
+.\host-monitor.exe credentials set --type runtime
+.\host-monitor.exe credentials set --type admin
+.\host-monitor.exe credentials status --type runtime --json
+.\host-monitor.exe credentials status --type admin --json
+.\host-monitor.exe credentials update --type admin
+.\host-monitor.exe credentials delete --type admin
+.\host-monitor.exe credentials doctor --type runtime --json
 ```
 
 `set` refuses to overwrite an existing file; `update` requires an existing record
 and changes only specified fields. With no input options they prompt in the
 terminal. API-key input has echo disabled. During interactive update, a blank
 answer retains the current value. To clear optional fields, use
-`credentials update --unset base-url --unset organization-id`.
+`credentials update --type runtime --unset base-url --unset organization-id`.
 
 For automation, pipe the API key from a secret provider into
-`host-monitor credentials set --tunnel-id tunnel_... --api-key-stdin` or
-`host-monitor credentials update --api-key-stdin`. No API-key argument exists.
+`host-monitor credentials set --type runtime --tunnel-id tunnel_... --api-key-stdin` or
+`host-monitor credentials update --type runtime --api-key-stdin`.
+For admin credentials, use `host-monitor credentials set --type admin --api-key-stdin`
+or `host-monitor credentials update --type admin --api-key-stdin`.
+No API-key argument exists.
 Stdin is a single UTF-8 key (optional trailing newline), bounded at 16 KiB;
 embedded control characters are rejected. Without a terminal, a command never
 falls back to a GUI or waits for interactive input. To explicitly migrate existing
-`CONTROL_PLANE_*` variables, use `credentials set --from-env` or
-`credentials update --from-env`. Other management commands never import ambient
+runtime `CONTROL_PLANE_*` variables, use `credentials set --type runtime --from-env`
+or `credentials update --type runtime --from-env`. With `--type admin`,
+`--from-env` reads `OPENAI_ADMIN_KEY` and optional `CONTROL_PLANE_BASE_URL` /
+`CONTROL_PLANE_ORGANIZATION_ID`, and ignores the runtime key and tunnel ID.
+Other management commands never import ambient
 credentials. Empty optional fields can also be set with `--base-url=` or
 `--organization-id=`. A complete record, including metadata, is limited to 16 KiB.
 
-`status` and `doctor` show the selected absolute path, encryption backend, file
+`status` and `doctor` show the selected type, absolute path, encryption backend, file
 presence/readability, and effective configuration sources. They never display any
 API-key characters. `--json` returns this metadata in JSON. `doctor` additionally
 checks backend detection; that alone does not prove encryption authorization.
 Neither command creates directories, initializes encryption keys, or rewrites the
-file. `delete` works without decrypting the file and succeeds if already absent;
-an active process can keep using credentials already loaded in memory. This is
+file. `delete` checks the public format/type header without decrypting the file
+and succeeds if already absent. A wrong-type or unknown-format file is not
+deleted. Updating or loading a file also checks the encrypted record type. An
+active process can keep using credentials already loaded in memory. This is
 local deletion, not remote key revocation or guaranteed physical data erasure.
 
 Windows uses user-scoped DPAPI with UI forbidden and application-specific entropy.
@@ -414,7 +443,9 @@ checks when changes are pushed.
 Credential tests cover native Windows DPAPI roundtrips and ACLs, CLI subprocess
 operations against the built executable, redaction, environment/file precedence,
 corruption/size bounds, failed-update preservation, concurrent updates, and a mock
-tunnel authenticated using the encrypted store. Common helper-protocol tests
+tunnel authenticated using the encrypted store. They also cover independent
+admin/runtime lifecycles, wrong-type file rejection, and legacy runtime loading.
+Common helper-protocol tests
 verify the Linux systemd flags and stdin transfer without needing a Linux host.
 Linux-native permission/path tests run on Linux; the optional native systemd
 roundtrip skips unless a supported helper and a readable pre-existing host key are

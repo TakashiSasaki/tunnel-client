@@ -55,6 +55,8 @@ key in the environment bypass the saved file entirely; stdio needs no credential
   CONTROL_PLANE_BASE_URL (optional)
   CONTROL_PLANE_ORGANIZATION_ID (optional)
   HOST_MONITOR_CREDENTIALS_FILE (optional; overridden by --credentials-file)
+  HOST_MONITOR_ADMIN_CREDENTIALS_FILE (credentials --type admin only)
+  OPENAI_ADMIN_KEY (credentials set/update --type admin --from-env only)
   HOST_MONITOR_TIMEOUT=10s (100ms..120s)
 
 No local HTTP listeners or plaintext configuration files are used.
@@ -92,7 +94,9 @@ func execute(ctx context.Context, args []string, in io.Reader, out io.Writer, ge
 		if flags.Arg(0) != "credentials" {
 			return usageError("unexpected argument; use --help")
 		}
-		return (credentialCLI{in: in, out: out, getenv: getenv, open: func(path string) credentialStore { return hostcredentials.New(path) }}).execute(ctx, flags.Args()[1:], *path)
+		return (credentialCLI{in: in, out: out, getenv: getenv, open: func(path string, kind hostcredentials.Kind) credentialStore {
+			return hostcredentials.NewForKind(path, kind)
+		}}).execute(ctx, flags.Args()[1:], *path)
 	}
 	cfg, err := settingsWithCredentials(ctx, getenv, *path)
 	if err != nil {

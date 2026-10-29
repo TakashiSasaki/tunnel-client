@@ -61,6 +61,9 @@ func settingsFromRecord(getenv func(string) string, record hostcredentials.Recor
 	if cfg.Transport == "stdio" {
 		return cfg, nil
 	}
+	if record.EffectiveKind() != hostcredentials.Runtime {
+		return settings{}, errors.New("monitor startup requires runtime credentials; admin credentials cannot be used")
+	}
 	cfg.Tunnel = tunnelclient.Config{
 		TunnelID:            strings.TrimSpace(getenv("CONTROL_PLANE_TUNNEL_ID")),
 		APIKey:              strings.TrimSpace(getenv("CONTROL_PLANE_API_KEY")),
@@ -81,10 +84,10 @@ func settingsFromRecord(getenv func(string) string, record hostcredentials.Recor
 		cfg.Tunnel.OrganizationID = record.OrganizationID
 	}
 	if cfg.Tunnel.TunnelID == "" {
-		return settings{}, fmt.Errorf("CONTROL_PLANE_TUNNEL_ID is required in tunnel mode; alternatively run credentials set")
+		return settings{}, fmt.Errorf("CONTROL_PLANE_TUNNEL_ID is required in tunnel mode; alternatively run credentials set --type runtime")
 	}
 	if cfg.Tunnel.APIKey == "" {
-		return settings{}, fmt.Errorf("CONTROL_PLANE_API_KEY is required in tunnel mode; alternatively run credentials set")
+		return settings{}, fmt.Errorf("CONTROL_PLANE_API_KEY is required in tunnel mode; alternatively run credentials set --type runtime")
 	}
 	return cfg, nil
 }
