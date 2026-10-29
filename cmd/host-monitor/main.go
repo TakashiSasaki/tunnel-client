@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 TAKASHI SASAKI <takashi316@gmail.com>
 
-// host-monitor is an environment-only, single-binary MCP server and tunnel client.
+// host-monitor is a single-binary MCP server, tunnel client and credential CLI.
 package main
 
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,35 +17,88 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	tunnelclient "github.com/openai/tunnel-client"
+	"github.com/openai/tunnel-client/internal/hostcredentials"
 	"github.com/openai/tunnel-client/internal/hostmonitor"
 	"github.com/openai/tunnel-client/pkg/version"
 )
 
 func main() {
-	if len(os.Args) > 1 {
-		switch os.Args[1] {
-		case "--version":
-			fmt.Println("host-monitor " + version.Version)
-			return
-		case "--help", "-h":
-			fmt.Println("host-monitor: read-only MCP host monitoring in one executable.\n\nConfiguration uses environment variables only:\n  HOST_MONITOR_TRANSPORT=tunnel (default) or stdio\n  CONTROL_PLANE_TUNNEL_ID (required for tunnel)\n  CONTROL_PLANE_API_KEY (required for tunnel)\n  CONTROL_PLANE_BASE_URL (optional)\n  CONTROL_PLANE_ORGANIZATION_ID (optional)\n  HOST_MONITOR_TIMEOUT=10s (100ms..120s)\n\nNo configuration files or local HTTP listeners are used.")
-			return
-		default:
-			fmt.Fprintln(os.Stderr, "unexpected argument; use --help (configuration is environment-only)")
-			os.Exit(2)
-		}
-	}
-	cfg, err := settingsFromEnvironment(os.Getenv)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := run(ctx, cfg); err != nil && !errors.Is(err, context.Canceled) {
+	if err := execute(ctx, os.Args[1:], os.Stdin, os.Stdout, os.Getenv); err != nil && !errors.Is(err, context.Canceled) {
 		fmt.Fprintln(os.Stderr, err)
+		var usage commandError
+		if errors.As(err, &usage) {
+			os.Exit(2)
+		}
+		if errors.Is(err, hostcredentials.ErrNotFound) {
+			os.Exit(3)
+		}
+		if errors.Is(err, hostcredentials.ErrUnavailable) {
+			os.Exit(4)
+		}
 		os.Exit(1)
 	}
+}
+
+const mainHelp = `host-monitor: read-only MCP host monitoring in one executable.
+
+  host-monitor [--credentials-file PATH]     Start the monitor
+  host-monitor credentials --help          Manage encrypted credentials
+  host-monitor --version
+
+Environment variables override saved credentials. A complete tunnel ID and API
+key in the environment bypass the saved file entirely; stdio needs no credentials.
+  HOST_MONITOR_TRANSPORT=tunnel (default) or stdio
+  CONTROL_PLANE_TUNNEL_ID
+  CONTROL_PLANE_API_KEY
+  CONTROL_PLANE_BASE_URL (optional)
+  CONTROL_PLANE_ORGANIZATION_ID (optional)
+  HOST_MONITOR_CREDENTIALS_FILE (optional; overridden by --credentials-file)
+  HOST_MONITOR_TIMEOUT=10s (100ms..120s)
+
+No local HTTP listeners or plaintext configuration files are used.
+`
+
+func execute(ctx context.Context, args []string, in io.Reader, out io.Writer, getenv func(string) string) error {
+	flags := flag.NewFlagSet("host-monitor", flag.ContinueOnError)
+	flags.SetOutput(io.Discard)
+	path := flags.String("credentials-file", "", "")
+	showVersion := flags.Bool("version", false, "")
+	if err := flags.Parse(args); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			_, err = fmt.Fprint(out, mainHelp)
+			return err
+		}
+		return usageError("invalid arguments; use --help")
+	}
+	if *showVersion {
+		if flags.NArg() != 0 {
+			return usageError("--version does not accept a subcommand")
+		}
+		_, err := fmt.Fprintln(out, "host-monitor "+version.Version)
+		return err
+	}
+	var emptyPath bool
+	flags.Visit(func(f *flag.Flag) {
+		if f.Name == "credentials-file" && *path == "" {
+			emptyPath = true
+		}
+	})
+	if emptyPath {
+		return usageError("--credentials-file cannot be empty")
+	}
+	if flags.NArg() > 0 {
+		if flags.Arg(0) != "credentials" {
+			return usageError("unexpected argument; use --help")
+		}
+		return (credentialCLI{in: in, out: out, getenv: getenv, open: func(path string) credentialStore { return hostcredentials.New(path) }}).execute(ctx, flags.Args()[1:], *path)
+	}
+	cfg, err := settingsWithCredentials(ctx, getenv, *path)
+	if err != nil {
+		return err
+	}
+	return run(ctx, cfg)
 }
 
 func run(ctx context.Context, cfg settings) (runErr error) {

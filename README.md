@@ -67,8 +67,8 @@ then read the onboarding guide below.
 - **Embedding an MCP server directly in a Go process?** Use the Go SDK with
   the MCP SDK's in-memory transport; see
   [`examples/go-sdk-inmemory`](examples/go-sdk-inmemory).
-- **Need read-only host monitoring in one executable, configured only through
-  environment variables?** Build `./cmd/host-monitor`; see
+- **Need read-only host monitoring and encrypted credential management in one
+  executable, with environment overrides?** Build `./cmd/host-monitor`; see
   [`docs/host-monitor.md`](docs/host-monitor.md).
 
 ## Try the embedded demo
@@ -932,7 +932,7 @@ The original OpenAI tunnel-client code remains licensed under the
 
 Original host-monitor additions by TAKASHI SASAKI ([takashi316@gmail.com](mailto:takashi316@gmail.com)) in this fork are licensed
 under the [MIT License](LICENSE-MIT). This covers `cmd/host-monitor/`,
-`internal/hostmonitor/`, `docs/host-monitor.md`, and
+`internal/hostmonitor/`, `internal/hostcredentials/`, `docs/host-monitor.md`, and
 `.github/workflows/host-monitor.yml`. MIT identifiers in those source files
 refer to these additions, not to upstream code or third-party dependencies.
 

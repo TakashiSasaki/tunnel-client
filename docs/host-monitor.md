@@ -6,9 +6,11 @@ retains its [Apache License 2.0](../LICENSE) and [NOTICE](../NOTICE), and
 third-party dependencies retain their respective licenses.
 
 `host-monitor` combines a host-monitoring MCP server and the OpenAI Secure MCP
-Tunnel client in one Go executable. It reads configuration only from environment
-variables. It does not load or generate profiles, configuration files, logs on
-disk, an HTTP admin UI, or a local HTTP listener. Log messages go to stderr.
+Tunnel client and local credential-management CLI in one Go executable.
+Environment variables override an optional OS-encrypted credential file.
+Monitoring opens no local HTTP listener or admin UI and creates no configuration,
+log, or history files. Only explicit local credential commands create, update
+or delete the encrypted credential file. Log messages go to stderr.
 
 Windows and Linux are the initial supported targets. The common monitoring tools
 and JSON field names are used on both; Windows additionally exposes `screenshot`.
@@ -230,13 +232,20 @@ not advertise this tool.
 | Environment variable | Default | Purpose |
 | --- | --- | --- |
 | `HOST_MONITOR_TRANSPORT` | `tunnel` | `tunnel` for the built-in client, or `stdio` for a local MCP client |
-| `CONTROL_PLANE_TUNNEL_ID` | Required in tunnel mode | Existing OpenAI tunnel identity |
-| `CONTROL_PLANE_API_KEY` | Required in tunnel mode | Runtime key with Tunnels Read + Use |
+| `CONTROL_PLANE_TUNNEL_ID` | Saved value, or required in tunnel mode | Existing OpenAI tunnel identity |
+| `CONTROL_PLANE_API_KEY` | Saved value, or required in tunnel mode | Runtime key with Tunnels Read + Use |
 | `CONTROL_PLANE_BASE_URL` | SDK default: `https://api.openai.com` | Optional control-plane host override |
 | `CONTROL_PLANE_ORGANIZATION_ID` | Unset | Optional Platform organization |
 | `HOST_MONITOR_TIMEOUT` | `10s` | Per-tool context timeout; allowed `100ms`–`120s` |
+| `HOST_MONITOR_CREDENTIALS_FILE` | OS-specific path below | Encrypted credential file; overridden by `--credentials-file` |
 
-There is no configuration-file option and no implicit credential-file lookup.
+There is no plaintext configuration-file option. Nonempty credential environment
+variables override corresponding saved fields; empty/whitespace values are treated
+as unset. When both tunnel ID and API key are supplied via environment, the saved
+file is bypassed entirely, including its optional URL/organization fields. Supply
+those optional environment variables too if needed. Stdio mode never reads the
+credential file. A missing store is allowed if the required environment is present;
+an unreadable or corrupt selected store is an error when fallback is needed.
 The inherited HTTP proxy environment remains available to the tunnel client's
 HTTP transport. Do not embed an API key in the binary. Use a runtime key, not an
 organization admin key.
@@ -272,6 +281,99 @@ Startup is distinct from remote connectivity. The stderr message
 `host-monitor: tunnel polling connected` means the first control-plane poll
 succeeded; it does not mean that a tool has been called from ChatGPT/Codex.
 
+## Local encrypted credentials
+
+The same executable provides `credentials set`, `update`, `delete`, `status`,
+and `doctor`. These are local CLI commands, not MCP tools. They do not contact
+OpenAI, issue/revoke API keys, or restart an existing monitor. Stored changes apply
+on the next start. Run the commands under the same OS account as the monitor.
+
+| OS | Default encrypted file |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\TakashiSasaki\HostMonitor\credentials.enc` |
+| Linux | `$XDG_DATA_HOME/host-monitor/credentials.enc` |
+| Linux with unset/empty `XDG_DATA_HOME` | `$HOME/.local/share/host-monitor/credentials.enc` |
+
+Windows resolves LocalAppData with the Known Folder API. Relative `XDG_DATA_HOME`
+is ignored per the XDG specification. File selection is `--credentials-file PATH`
+first, then `HOST_MONITOR_CREDENTIALS_FILE`, then the default above. Relative
+overrides resolve against the command's working directory. All operations use
+exactly the selected path; choosing another path does not move an existing file.
+The path option works on normal startup and after a credential subcommand:
+
+```text
+host-monitor --credentials-file /absolute/path/credentials.enc
+host-monitor credentials status --credentials-file /absolute/path/credentials.enc
+```
+
+In Windows PowerShell (add `.exe` to the command on Windows):
+
+```powershell
+.\host-monitor.exe credentials set
+.\host-monitor.exe credentials status --json
+.\host-monitor.exe credentials update
+.\host-monitor.exe credentials delete
+.\host-monitor.exe credentials doctor --json
+```
+
+`set` refuses to overwrite an existing file; `update` requires an existing record
+and changes only specified fields. With no input options they prompt in the
+terminal. API-key input has echo disabled. During interactive update, a blank
+answer retains the current value. To clear optional fields, use
+`credentials update --unset base-url --unset organization-id`.
+
+For automation, pipe the API key from a secret provider into
+`host-monitor credentials set --tunnel-id tunnel_... --api-key-stdin` or
+`host-monitor credentials update --api-key-stdin`. No API-key argument exists.
+Stdin is a single UTF-8 key (optional trailing newline), bounded at 16 KiB;
+embedded control characters are rejected. Without a terminal, a command never
+falls back to a GUI or waits for interactive input. To explicitly migrate existing
+`CONTROL_PLANE_*` variables, use `credentials set --from-env` or
+`credentials update --from-env`. Other management commands never import ambient
+credentials. Empty optional fields can also be set with `--base-url=` or
+`--organization-id=`. A complete record, including metadata, is limited to 16 KiB.
+
+`status` and `doctor` show the selected absolute path, encryption backend, file
+presence/readability, and effective configuration sources. They never display any
+API-key characters. `--json` returns this metadata in JSON. `doctor` additionally
+checks backend detection; that alone does not prove encryption authorization.
+Neither command creates directories, initializes encryption keys, or rewrites the
+file. `delete` works without decrypting the file and succeeds if already absent;
+an active process can keep using credentials already loaded in memory. This is
+local deletion, not remote key revocation or guaranteed physical data erasure.
+
+Windows uses user-scoped DPAPI with UI forbidden and application-specific entropy.
+Encrypted files and newly created directories have protected ACLs granting access
+only to the current user, SYSTEM, and Administrators. Linux uses an existing
+`/usr/bin/systemd-creds` or `/bin/systemd-creds`, version 256 or newer, with
+`--user --no-ask-password` and a fixed credential name independent of the filename.
+Encryption explicitly uses the systemd host key (`--with-key=host`), not TPM
+probing. The per-user credential service and noninteractive OS authorization must
+already permit the operation. An explicit Linux save may initialize systemd's
+host credential key if the OS permits it. The agent never installs a helper,
+changes authorization policy, starts a monitoring provider, or enables GUI prompts.
+If this backend is unavailable, environment-only startup remains supported.
+
+On Linux, new directories are `0700`, files are `0600`; a write directory must be
+owned by the current user and not writable by group/others. Reads reject public
+permissions, foreign ownership, symlinks and extra hard links. Windows rejects
+final reparse points and extra hard links. Updates serialize CLI writers using OS
+locks and publish a fully written ciphertext file by replacement; encryption or
+validation failure preserves the old file. Temporary files contain ciphertext
+only and are cleaned up during normal error handling. No persistent lock file is
+created. Files are bound to the OS encryption context; copying one to another
+account or machine is not a credential migration mechanism.
+
+Exit codes: `0` success; `2` command usage/input-mode error; `3` missing record
+when required; `4` unavailable Linux encryption backend/authorization; `1` other
+storage, validation or runtime failures. `status` on an absent store succeeds and
+reports `exists: false`. No plaintext fallback or key-export command is provided.
+
+References: [Windows DPAPI](https://learn.microsoft.com/en-us/windows/win32/api/dpapi/nf-dpapi-cryptprotectdata),
+[Known Folders](https://learn.microsoft.com/en-us/windows/win32/shell/knownfolderid),
+[XDG paths](https://specifications.freedesktop.org/basedir/latest/),
+[systemd-creds](https://www.freedesktop.org/software/systemd/man/latest/systemd-creds.html).
+
 ## Build and verify
 
 Use the toolchain specified by the repository's `go.mod`. Build the dedicated
@@ -281,19 +383,21 @@ entrypoint, rather than the full CLI. No Node.js, pnpm or UI build is needed.
 $env:CGO_ENABLED = '0'
 go build -trimpath -buildvcs=false -ldflags '-s -w' -o .\bin\host-monitor.exe ./cmd/host-monitor
 .\bin\host-monitor.exe --version
-go test ./internal/hostmonitor ./cmd/host-monitor
+go test ./internal/hostcredentials ./internal/hostmonitor ./cmd/host-monitor
 ```
 
 Linux:
 
 ```sh
 CGO_ENABLED=0 go build -trimpath -buildvcs=false -ldflags '-s -w' -o bin/host-monitor ./cmd/host-monitor
-go test ./internal/hostmonitor ./cmd/host-monitor
+go test ./internal/hostcredentials ./internal/hostmonitor ./cmd/host-monitor
 ```
 
 Copy only the resulting executable to the target. It needs the normal OS APIs
 and the current user's query permissions, but no Go/Node/Python runtime or
-sidecar files. Windows WMI and session APIs must be available for the respective
+sidecar executables. Saved credentials add one encrypted data file. Linux saved
+credentials require the existing supported systemd helper described above;
+environment-only operation has no such dependency. Windows WMI/session APIs must be available for the respective
 tools. The usual OpenAI polling path does not need a `cloudflared` companion.
 
 Tests cover MCP discovery, actual host queries, bounded inputs and CPU
@@ -306,3 +410,12 @@ desktop; validation and error propagation still run. Set
 `HOST_MONITOR_TEST_BINARY` to an absolute built executable path to run the stdio
 test against that exact artifact. GitHub Actions runs native Windows and Linux
 checks when changes are pushed.
+
+Credential tests cover native Windows DPAPI roundtrips and ACLs, CLI subprocess
+operations against the built executable, redaction, environment/file precedence,
+corruption/size bounds, failed-update preservation, concurrent updates, and a mock
+tunnel authenticated using the encrypted store. Common helper-protocol tests
+verify the Linux systemd flags and stdin transfer without needing a Linux host.
+Linux-native permission/path tests run on Linux; the optional native systemd
+roundtrip skips unless a supported helper and a readable pre-existing host key are
+available, so it does not initialize a test host's credential key implicitly.

@@ -8,6 +8,7 @@ on:
     paths:
       - 'cmd/host-monitor/**'
       - 'internal/hostmonitor/**'
+      - 'internal/hostcredentials/**'
       - 'client.go'
       - 'pkg/**'
       - 'go.mod'
@@ -17,6 +18,7 @@ on:
     paths:
       - 'cmd/host-monitor/**'
       - 'internal/hostmonitor/**'
+      - 'internal/hostcredentials/**'
       - 'client.go'
       - 'pkg/**'
       - 'go.mod'
@@ -42,7 +44,7 @@ jobs:
         with:
           go-version-file: go.mod
       - name: Test host monitoring and tunnel integration
-        run: go test ./internal/hostmonitor ./cmd/host-monitor -count=1 -v
+        run: go test ./internal/hostcredentials ./internal/hostmonitor ./cmd/host-monitor -count=1 -v
       - name: Build
         run: go build -trimpath -buildvcs=false -ldflags '-s -w' -o bin/ ./cmd/host-monitor
       - name: Check Windows dependency initialization boundary
