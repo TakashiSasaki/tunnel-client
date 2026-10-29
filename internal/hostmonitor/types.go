@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 TAKASHI SASAKI <takashi316@gmail.com>
+
 // Package hostmonitor provides read-only host monitoring tools for an embedded MCP server.
 package hostmonitor
 

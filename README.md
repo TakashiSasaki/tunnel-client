@@ -926,4 +926,15 @@ make admin-ui
   and reuse those live values instead of guessing ids.
 
 ## License
-This project is licensed under the [Apache License 2.0](LICENSE).
+
+The original OpenAI tunnel-client code remains licensed under the
+[Apache License 2.0](LICENSE), with its attribution preserved in [NOTICE](NOTICE).
+
+Original host-monitor additions by TAKASHI SASAKI ([takashi316@gmail.com](mailto:takashi316@gmail.com)) in this fork are licensed
+under the [MIT License](LICENSE-MIT). This covers `cmd/host-monitor/`,
+`internal/hostmonitor/`, `docs/host-monitor.md`, and
+`.github/workflows/host-monitor.yml`. MIT identifiers in those source files
+refer to these additions, not to upstream code or third-party dependencies.
+
+Upstream code and dependencies retain their existing licenses; the MIT license
+for the additions does not replace the upstream Apache license.

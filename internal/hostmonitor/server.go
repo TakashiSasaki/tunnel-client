@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 TAKASHI SASAKI <takashi316@gmail.com>
+
 package hostmonitor
 
 import (
@@ -51,6 +54,7 @@ func NewServer(version string, timeout time.Duration) *mcp.Server {
 	register(s, timeout, "device_list", "List the OS's existing device inventory without hardware probes or rescans. Sorted, bounded pages; optional pci/usb bus filter.", deviceList)
 	register(s, timeout, "temperatures", "Read temperatures already exposed by the OS or existing sensor providers, with sensor names and sources. Never installs/loads drivers or enables sensors. An empty list with source status is valid; thermal zones are not automatically CPU cores.", temperatures)
 	registerPlatformTools(s, timeout)
+	registerSnapshot(s, timeout)
 	return s
 }
 

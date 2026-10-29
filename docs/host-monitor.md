@@ -1,5 +1,10 @@
 # Read-only host monitor
 
+Original host-monitor additions by TAKASHI SASAKI ([takashi316@gmail.com](mailto:takashi316@gmail.com)) are licensed under the
+[MIT License](../LICENSE-MIT). The OpenAI tunnel client used by this command
+retains its [Apache License 2.0](../LICENSE) and [NOTICE](../NOTICE), and
+third-party dependencies retain their respective licenses.
+
 `host-monitor` combines a host-monitoring MCP server and the OpenAI Secure MCP
 Tunnel client in one Go executable. It reads configuration only from environment
 variables. It does not load or generate profiles, configuration files, logs on
@@ -27,6 +32,7 @@ It is collected on demand, with no background sampling or metrics history.
 | `gpu_info` | OS-reported graphics/video controllers and existing driver details | None |
 | `device_list` | Existing OS device inventory | `bus`: `all` (default), `pci`, `usb`; `offset`: default 0; `limit`: default 100, maximum 500 |
 | `temperatures` | Available sensor readings in Celsius, with names, kinds and sources | None |
+| `host_snapshot` | Selected monitoring results in one call, retaining successful items if others fail | Required `include` list of monitoring tool names; optional `cpu`, `process`, `devices` options |
 | `screenshot` (Windows only) | Current visible desktop as a PNG MCP image, plus image metadata | `display`: `primary` (default) or `all`; `max_width`: default 1280; `max_height`: default 720 |
 
 Each result contains `snapshot.observed_at` (UTC RFC3339) and `snapshot.os`.
@@ -66,6 +72,53 @@ finishes, even after a caller timeout, to bound unfinished background work.
 Event logs, journal queries, alerting and historical storage are outside this
 initial implementation. These can be added separately without changing the
 single-binary deployment model.
+
+## Aggregate monitoring
+
+Call `host_snapshot` to select up to 13 monitoring items in a single MCP tool
+request. `include` is required, nonempty, and uses the exact individual tool
+names listed above. Unknown or duplicate names reject the request before any
+collection starts. Screenshots and nested `host_snapshot` calls are excluded.
+
+Example tool arguments:
+
+```json
+{
+  "include": ["host_info", "cpu_usage", "memory_usage", "swap_usage", "disk_usage", "process_list", "temperatures"],
+  "cpu": {"sample_ms": 200},
+  "process": {"limit": 20}
+}
+```
+
+`cpu`, `process`, and `devices` pass options to `cpu_usage`, `process_list`, and
+`device_list`, respectively. They use the individual tools' defaults and bounds
+and are ignored when their item is not selected. For example, to include the
+first five USB devices, add `device_list` to `include` and pass
+`"devices": {"bus": "usb", "limit": 5}`. Process/device lists remain paginated;
+the aggregate does not automatically fetch additional pages.
+
+The structured response contains:
+
+- `include`: the requested names, in input order.
+- `results`: successful results keyed by tool name, with the same fields as
+  individual calls (including their own timestamps, warnings and source status).
+- `errors`: failed or unfinished items keyed by tool name, with an error message.
+- `complete`: true only when every requested collector succeeds. It does not
+  guarantee every field, device or temperature source is available; consult each
+  item's warnings, unavailable fields and source statuses.
+- `snapshot.observed_at` and `finished_at`: collection start and finish times.
+
+At most four collectors run concurrently, within one shared
+`HOST_MONITOR_TIMEOUT` budget for the whole request. A collector failure,
+invalid item-specific option, or timeout retains successful results and reports
+the affected items in `errors`, rather than turning the whole response into an
+MCP tool error. Invalid `include` selections are MCP errors. Explicit client
+cancellation may prevent delivery of any response. An OS query that cannot be
+interrupted may finish after timeout; its late result is discarded.
+
+Measurements are collected over an interval, not atomically at one instant.
+Use each item's timestamp when comparing counters. The aggregate adds no
+background monitoring, configuration files, or host modifications.
 
 ## Hardware inventory and available temperatures
 

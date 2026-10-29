@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 TAKASHI SASAKI <takashi316@gmail.com>
+
 package main
 
 import (
@@ -84,7 +87,7 @@ func TestStdioProcessWithoutConfigFiles(t *testing.T) {
 	}
 	defer session.Close()
 	tools, err := session.ListTools(ctx, nil)
-	expected := 13
+	expected := 14
 	if runtime.GOOS == "windows" {
 		expected++
 	}
@@ -146,6 +149,24 @@ func TestStdioProcessWithoutConfigFiles(t *testing.T) {
 			}
 		}
 	}
+	result, err := session.CallTool(ctx, &mcp.CallToolParams{Name: "host_snapshot", Arguments: hostmonitor.SnapshotArgs{
+		Include: []string{"host_info", "memory_usage", "cpu_usage", "process_list"},
+		CPU:     hostmonitor.CPUArgs{SampleMS: 100}, Process: hostmonitor.ProcessArgs{Limit: 2},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := json.Marshal(result.StructuredContent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var aggregate hostmonitor.HostSnapshot
+	if err := json.Unmarshal(raw, &aggregate); err != nil {
+		t.Fatal(err)
+	}
+	if result.IsError || !aggregate.Complete || len(aggregate.Results) != 4 || len(aggregate.Errors) != 0 {
+		t.Fatalf("invalid aggregate over stdio: %+v", result)
+	}
 	if err := session.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -197,8 +218,27 @@ func TestEmbeddedHostToolThroughTunnel(t *testing.T) {
 			}
 		}}},
 	}
+	aggregateCommand := mocktunnelservice.CommandResponse{
+		Command: mocktunnelservice.NewCommand("monitor-snapshot", json.RawMessage(`{"jsonrpc":"2.0","id":"snapshot","method":"tools/call","params":{"name":"host_snapshot","arguments":{"include":["host_info","memory_usage","cpu_usage"],"cpu":{"sample_ms":1}}}}`), nil),
+		ExpectedResponses: []mocktunnelservice.ExpectedResponse{{RequestID: "monitor-snapshot", Assert: func(tb testing.TB, response mocktunnelservice.ReceivedResponse) {
+			var payload struct {
+				Result struct {
+					IsError           bool                     `json:"isError"`
+					StructuredContent hostmonitor.HostSnapshot `json:"structuredContent"`
+				} `json:"result"`
+			}
+			if err := json.Unmarshal(response.JSONResponse, &payload); err != nil {
+				tb.Error(err)
+				return
+			}
+			out := payload.Result.StructuredContent
+			if response.ResponseCode != http.StatusOK || payload.Result.IsError || out.Complete || len(out.Results) != 2 || len(out.Errors) != 1 || out.Results["host_info"] == nil || out.Results["memory_usage"] == nil || !strings.Contains(out.Errors["cpu_usage"], "sample_ms") {
+				tb.Errorf("invalid tunneled partial snapshot response: %+v", payload)
+			}
+		}}},
+	}
 	controlPlane := mocktunnelservice.NewMockTunnelService(mocktunnelservice.WithAPIKey(apiKey), mocktunnelservice.WithTunnelID(tunnelID),
-		mocktunnelservice.WithInitializationPhaseCommandsWithoutSessionHeaders(), mocktunnelservice.WithCommandResponses(command))
+		mocktunnelservice.WithInitializationPhaseCommandsWithoutSessionHeaders(), mocktunnelservice.WithCommandResponses(command, aggregateCommand))
 	controlPlane.Start(t)
 	cfg, err := settingsFromEnvironment(func(key string) string {
 		return map[string]string{
@@ -226,7 +266,7 @@ func TestEmbeddedHostToolThroughTunnel(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("monitor did not stop")
 	}
-	if responses := controlPlane.ReceivedResponses(mocktunnelservice.ResponseMatchMatched); len(responses) != 3 {
+	if responses := controlPlane.ReceivedResponses(mocktunnelservice.ResponseMatchMatched); len(responses) != 4 {
 		t.Errorf("expected initialize, initialized and tool responses; got %d", len(responses))
 	}
 }

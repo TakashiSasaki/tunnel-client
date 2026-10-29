@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 TAKASHI SASAKI <takashi316@gmail.com>
+
 package hostmonitor
 
 import (
@@ -13,10 +16,15 @@ import (
 
 func connectMonitor(t *testing.T) (*mcp.ClientSession, context.Context) {
 	t.Helper()
+	return connectMonitorWithTimeout(t, 20*time.Second)
+}
+
+func connectMonitorWithTimeout(t *testing.T, timeout time.Duration) (*mcp.ClientSession, context.Context) {
+	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	t.Cleanup(cancel)
 	serverTransport, clientTransport := mcp.NewInMemoryTransports()
-	server := NewServer("test", 20*time.Second)
+	server := NewServer("test", timeout)
 	done := make(chan error, 1)
 	go func() { done <- server.Run(ctx, serverTransport) }()
 	client := mcp.NewClient(&mcp.Implementation{Name: "monitor-test", Version: "1"}, nil)
@@ -62,7 +70,7 @@ func TestReadOnlyMCPToolsAgainstHost(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected := 13
+	expected := 14
 	if runtime.GOOS == "windows" {
 		expected++
 	}

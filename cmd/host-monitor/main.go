@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 TAKASHI SASAKI <takashi316@gmail.com>
+
 // host-monitor is an environment-only, single-binary MCP server and tunnel client.
 package main
 

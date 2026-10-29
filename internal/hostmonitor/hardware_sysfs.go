@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 TAKASHI SASAKI <takashi316@gmail.com>
+
 package hostmonitor
 
 // These parsers read only explicit informational sysfs attributes. They are
