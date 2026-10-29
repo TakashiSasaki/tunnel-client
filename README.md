@@ -67,6 +67,9 @@ then read the onboarding guide below.
 - **Embedding an MCP server directly in a Go process?** Use the Go SDK with
   the MCP SDK's in-memory transport; see
   [`examples/go-sdk-inmemory`](examples/go-sdk-inmemory).
+- **Need read-only host monitoring in one executable, configured only through
+  environment variables?** Build `./cmd/host-monitor`; see
+  [`docs/host-monitor.md`](docs/host-monitor.md).
 
 ## Try the embedded demo
 

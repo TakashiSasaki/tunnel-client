@@ -1,0 +1,53 @@
+name: Host monitor
+
+on:
+  push:
+    paths:
+      - 'cmd/host-monitor/**'
+      - 'internal/hostmonitor/**'
+      - 'client.go'
+      - 'pkg/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/host-monitor.yml'
+  pull_request:
+    paths:
+      - 'cmd/host-monitor/**'
+      - 'internal/hostmonitor/**'
+      - 'client.go'
+      - 'pkg/**'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/host-monitor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      CGO_ENABLED: '0'
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: go.mod
+      - name: Test host monitoring and tunnel integration
+        run: go test ./internal/hostmonitor ./cmd/host-monitor -count=1 -v
+      - name: Build
+        run: go build -trimpath -buildvcs=false -ldflags '-s -w' -o bin/ ./cmd/host-monitor
+      - name: Check Windows dependency initialization boundary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $deps = go list -deps ./cmd/host-monitor
+          if ($LASTEXITCODE -ne 0) { throw 'Dependency listing failed' }
+          if ($deps -match '^github.com/shirou/gopsutil/v4/(host|process|disk)$') {
+            throw 'Windows dependency has privilege/counter-changing initialization'
+          }
